@@ -44,13 +44,7 @@ public class TicketService {
         ticket.setThreatLevel(request.getThreatLevel());
         ticket.setImportanceLevel(TicketImportanceEnum.LOW);
         ticket.setAssignedToRole(RoleEnum.MONITOR);
-
-        try {
-            ticket.setAnomalyType(AnomalyTypeEnum.valueOf(request.getAnomalyType()));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("Invalid anomaly type: " + request.getAnomalyType());
-        }
-
+        ticket.setAnomalyType(request.getAnomalyType());
         ticket.setMatrixCoordinates(request.getMatrixCoordinates());
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setUpdatedAt(LocalDateTime.now());

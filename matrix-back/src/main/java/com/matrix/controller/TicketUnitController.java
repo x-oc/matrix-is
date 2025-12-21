@@ -22,11 +22,10 @@ public class TicketUnitController extends BaseController {
     @PostMapping("/link")
     public ResponseEntity<ApiResponse<TicketUnit>> linkTicketToUnit(
             @Valid @RequestBody LinkTicketUnitRequest request) {
-        TicketUnitStatusEnum status = TicketUnitStatusEnum.valueOf(request.getStatus().toUpperCase());
         TicketUnit ticketUnit = ticketUnitService.linkTicketToUnit(
                 request.getTicketId(),
                 request.getUnitId(),
-                status
+                request.getStatus()
         );
         return created("Ticket linked to unit", ticketUnit);
     }
@@ -46,9 +45,8 @@ public class TicketUnitController extends BaseController {
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TicketUnit>> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
-        TicketUnitStatusEnum statusEnum = TicketUnitStatusEnum.valueOf(status.toUpperCase());
-        TicketUnit ticketUnit = ticketUnitService.updateStatus(id, statusEnum);
+            @RequestParam TicketUnitStatusEnum status) {
+        TicketUnit ticketUnit = ticketUnitService.updateStatus(id, status);
         return success("Status updated", ticketUnit);
     }
 

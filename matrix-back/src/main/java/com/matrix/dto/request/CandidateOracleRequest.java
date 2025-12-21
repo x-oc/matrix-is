@@ -4,7 +4,7 @@ import lombok.Data;
 import jakarta.validation.constraints.NotNull;
 
 @Data
-public class RequestOraclePredictionRequest {
+public class CandidateOracleRequest {
     @NotNull(message = "Unit ID is required")
     private Long unitId;
 

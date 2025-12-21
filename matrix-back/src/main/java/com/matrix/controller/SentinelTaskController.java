@@ -21,11 +21,9 @@ public class SentinelTaskController extends BaseController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<SentinelTask>> createTask(@Valid @RequestBody CreateSentinelTaskRequest request) {
-        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(request.getStatus().toUpperCase());
-
         SentinelTask task = sentinelTaskService.createTask(
                 request.getCreatedBy(),
-                statusEnum,
+                request.getStatus(),
                 request.getSentinelCount(),
                 request.getLocationId(),
                 request.getDescription()
@@ -40,9 +38,8 @@ public class SentinelTaskController extends BaseController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<SentinelTask>>> getTasksByStatus(@PathVariable String status) {
-        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(status.toUpperCase());
-        List<SentinelTask> tasks = sentinelTaskService.getTasksByStatus(statusEnum);
+    public ResponseEntity<ApiResponse<List<SentinelTask>>> getTasksByStatus(@PathVariable SentinelTaskStatusEnum status) {
+        List<SentinelTask> tasks = sentinelTaskService.getTasksByStatus(status);
         return success(tasks);
     }
 
@@ -55,9 +52,8 @@ public class SentinelTaskController extends BaseController {
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<SentinelTask>> updateTaskStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
-        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(status.toUpperCase());
-        SentinelTask task = sentinelTaskService.updateTaskStatus(id, statusEnum);
+            @RequestParam SentinelTaskStatusEnum status) {
+        SentinelTask task = sentinelTaskService.updateTaskStatus(id, status);
         return success("Task status updated", task);
     }
 }

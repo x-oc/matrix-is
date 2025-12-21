@@ -1,10 +1,11 @@
 package com.matrix.dto.request;
 
+import com.matrix.entity.enums.RoleEnum;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import jakarta.validation.constraints.*;
 
 @Data
 public class AssignTicketRequest {
-    @NotBlank(message = "Role name is required")
-    private String assignedToRole;
+    @NotNull(message = "Role is required")
+    private RoleEnum assignedToRole;
 }

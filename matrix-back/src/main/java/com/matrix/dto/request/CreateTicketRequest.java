@@ -1,5 +1,6 @@
 package com.matrix.dto.request;
 
+import com.matrix.entity.enums.AnomalyTypeEnum;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -16,8 +17,8 @@ public class CreateTicketRequest {
     @Max(value = 3, message = "Threat level must be between 1 and 3")
     private Integer threatLevel;
 
-    @NotBlank(message = "Anomaly type is required")
-    private String anomalyType;
+    @NotNull(message = "Anomaly type is required")
+    private AnomalyTypeEnum anomalyType;
 
     @NotBlank(message = "Matrix coordinates are required")
     private String matrixCoordinates;

@@ -1,11 +1,15 @@
 package com.matrix.service;
 
+import com.matrix.dto.response.DailyReportResponse;
+import com.matrix.entity.enums.TicketImportanceEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
 import com.matrix.entity.primary.Report;
+import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.ReportRepository;
 import com.matrix.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,61 +26,100 @@ public class ReportService {
     private final TicketRepository ticketRepository;
 
     @Transactional
-    public Report generateDailyReport(LocalDateTime periodStart, LocalDateTime periodEnd) {
-        log.info("Generating daily report for period: {} - {}", periodStart, periodEnd);
+    public DailyReportResponse generateDailyReportForArchitect(LocalDateTime periodStart, LocalDateTime periodEnd) {
+        var tickets = ticketRepository.findByPeriod(periodStart, periodEnd);
 
-        Map<String, Object> reportData = new HashMap<>();
+        DailyReportResponse response = new DailyReportResponse();
+        response.setPeriodStart(periodStart);
+        response.setPeriodEnd(periodEnd);
+        response.setGeneratedAt(LocalDateTime.now());
 
-        long totalTickets = ticketRepository.findByPeriod(periodStart, periodEnd).size();
-        long closedTickets = ticketRepository.countByStatus(TicketStatusEnum.CLOSED);
-        long pendingTickets = ticketRepository.countByStatus(TicketStatusEnum.UNDER_REVIEW);
+        int totalTickets = tickets.size();
+        int resolvedTickets = 0;
+        int pendingTickets = 0;
+        int highPriorityTickets = 0;
 
-        // Count by threat level
-        Map<Integer, Long> threatLevelStats = new HashMap<>();
-        for (int i = 1; i <= 3; i++) {
-            long count = ticketRepository.findByThreatLevel(i).stream()
-                    .filter(t -> t.getCreatedAt().isAfter(periodStart) && t.getCreatedAt().isBefore(periodEnd))
-                    .count();
-            threatLevelStats.put(i, count);
+        Map<String, Integer> threatLevelStats = new HashMap<>();
+        threatLevelStats.put("LEVEL_1", 0);
+        threatLevelStats.put("LEVEL_2", 0);
+        threatLevelStats.put("LEVEL_3", 0);
+
+        for (var ticket : tickets) {
+            if (ticket.getStatus() == TicketStatusEnum.CLOSED) {
+                resolvedTickets++;
+            }
+            if (ticket.getStatus() == TicketStatusEnum.IN_PROGRESS ||
+                    ticket.getStatus() == TicketStatusEnum.UNDER_REVIEW) {
+                pendingTickets++;
+            }
+            if (ticket.getImportanceLevel() == TicketImportanceEnum.HIGH) {
+                highPriorityTickets++;
+            }
+
+            String threatKey = "LEVEL_" + ticket.getThreatLevel();
+            threatLevelStats.put(threatKey, threatLevelStats.get(threatKey) + 1);
         }
 
-        String jsonData = buildJsonReport(totalTickets, closedTickets, pendingTickets, threatLevelStats);
+        response.setTotalTickets(totalTickets);
+        response.setResolvedTickets(resolvedTickets);
+        response.setPendingTickets(pendingTickets);
+        response.setHighPriorityTickets(highPriorityTickets);
+        response.setTicketsByThreatLevel(threatLevelStats);
 
-        Report report = new Report();
-        report.setPeriodStart(periodStart);
-        report.setPeriodEnd(periodEnd);
-        report.setGeneratedData(jsonData);
-        report.setCreatedAt(LocalDateTime.now());
+        double stabilityScore = calculateStabilityScore(resolvedTickets, totalTickets);
+        response.setSystemStabilityScore(stabilityScore);
 
-        return reportRepository.save(report);
+        saveReportToDatabase(response);
+
+        return response;
     }
 
-    private String buildJsonReport(long totalTickets, long closedTickets, long pendingTickets,
-                                   Map<Integer, Long> threatLevelStats) {
-        StringBuilder json = new StringBuilder();
-        json.append("{");
-        json.append("\"total_tickets\":").append(totalTickets).append(",");
-        json.append("\"closed_tickets\":").append(closedTickets).append(",");
-        json.append("\"pending_tickets\":").append(pendingTickets).append(",");
-        json.append("\"tickets_by_threat_level\":{");
-
-        boolean first = true;
-        for (Map.Entry<Integer, Long> entry : threatLevelStats.entrySet()) {
-            if (!first) json.append(",");
-            json.append("\"").append(entry.getKey()).append("\":").append(entry.getValue());
-            first = false;
-        }
-        json.append("}");
-        json.append("}");
-
-        return json.toString();
+    @Transactional(readOnly = true)
+    public DailyReportResponse getLatestReportForArchitect() {
+        LocalDateTime periodEnd = LocalDateTime.now();
+        LocalDateTime periodStart = periodEnd.minusHours(24);
+        return generateDailyReportForArchitect(periodStart, periodEnd);
     }
 
     @Transactional(readOnly = true)
     public Report getLatestReport() {
-        return reportRepository.findAll().stream()
+        return reportRepository.findAll()
+                .stream()
                 .sorted((r1, r2) -> r2.getCreatedAt().compareTo(r1.getCreatedAt()))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new ResourceNotFoundException("No reports found"));
+    }
+
+    private double calculateStabilityScore(int resolved, int total) {
+        if (total == 0) return 100.0;
+        return (resolved / (double) total) * 100.0;
+    }
+
+    private void saveReportToDatabase(DailyReportResponse response) {
+        Report report = new Report();
+        report.setPeriodStart(response.getPeriodStart());
+        report.setPeriodEnd(response.getPeriodEnd());
+        report.setGeneratedData(convertToJson(response));
+        report.setCreatedAt(response.getGeneratedAt());
+        reportRepository.save(report);
+    }
+
+    private String convertToJson(DailyReportResponse response) {
+        return String.format(
+                "{\"totalTickets\":%d,\"resolvedTickets\":%d,\"stabilityScore\":%.2f,\"highPriorityTickets\":%d}",
+                response.getTotalTickets(),
+                response.getResolvedTickets(),
+                response.getSystemStabilityScore(),
+                response.getHighPriorityTickets()
+        );
+    }
+
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void generateAutomaticDailyReport() {
+        log.info("Generating automatic daily report for Architect...");
+        LocalDateTime periodEnd = LocalDateTime.now();
+        LocalDateTime periodStart = periodEnd.minusHours(24);
+        generateDailyReportForArchitect(periodStart, periodEnd);
     }
 }

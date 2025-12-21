@@ -1,6 +1,7 @@
 package com.matrix.controller;
 
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.dto.response.DailyReportResponse;
 import com.matrix.entity.primary.Report;
 import com.matrix.service.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,10 @@ public class ReportController extends BaseController {
     private final ReportService reportService;
 
     @PostMapping("/generate-daily")
-    public ResponseEntity<ApiResponse<Report>> generateDailyReport(
+    public ResponseEntity<ApiResponse<DailyReportResponse>> generateDailyReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime periodStart,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime periodEnd) {
-        Report report = reportService.generateDailyReport(periodStart, periodEnd);
+        DailyReportResponse report = reportService.generateDailyReportForArchitect(periodStart, periodEnd);
         return created("Daily report generated", report);
     }
 
@@ -29,5 +30,13 @@ public class ReportController extends BaseController {
     public ResponseEntity<ApiResponse<Report>> getLatestReport() {
         Report report = reportService.getLatestReport();
         return success(report);
+    }
+
+    @GetMapping("/for-architect")
+    public ResponseEntity<ApiResponse<DailyReportResponse>> getArchitectReport() {
+        LocalDateTime periodEnd = LocalDateTime.now();
+        LocalDateTime periodStart = periodEnd.minusHours(24);
+        DailyReportResponse report = reportService.generateDailyReportForArchitect(periodStart, periodEnd);
+        return success("Architect report ready", report);
     }
 }

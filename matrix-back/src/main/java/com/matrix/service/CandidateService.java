@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CandidateService {
+public class CandidateService extends BaseService<Unit, Long> {
 
     private final UnitRepository unitRepository;
     private final OracleRequestRepository oracleRequestRepository;
@@ -36,15 +36,11 @@ public class CandidateService {
             if (unit.getStatus() == UnitStatusEnum.NORMAL ||
                     unit.getStatus() == UnitStatusEnum.SUSPICIOUS) {
 
-                // F-202: Создание досье и уведомление
                 unit.setStatus(UnitStatusEnum.CANDIDATE);
                 unit.setStatusUpdateAt(LocalDateTime.now());
                 unitRepository.save(unit);
 
-                // Уведомление Агента Смита и Смотрителя
                 notifyAgentsAboutCandidate(unit);
-
-                // Автоматическое создание запроса к Оракулу
                 createOracleRequestForCandidate(unit);
             }
         }
@@ -54,7 +50,6 @@ public class CandidateService {
         User systemUser = userRepository.findByUsername("system")
                 .orElseThrow(() -> new BusinessException("System user not found"));
 
-        // Уведомление Агентов Смита
         List<User> agents = userRepository.findByRole(RoleEnum.AGENT_SMITH);
         agents.stream()
                 .filter(User::getIsActive)
@@ -63,16 +58,15 @@ public class CandidateService {
                         messageService.sendMessage(
                                 systemUser.getId(),
                                 agent.getId(),
-                                "Обнаружен кандидат! ID: " + unit.getId() +
-                                        ", Индекс несогласия: " + unit.getDisagreementIndex() +
-                                        ", Досье: " + unit.getDossier()
+                                "Candidate detected! ID: " + unit.getId() +
+                                        ", Disagreement Index: " + unit.getDisagreementIndex() +
+                                        ", Dossier: " + unit.getDossier()
                         );
                     } catch (Exception e) {
                         log.error("Failed to send message to agent {}", agent.getId(), e);
                     }
                 });
 
-        // Уведомление Смотрителей
         List<User> monitors = userRepository.findByRole(RoleEnum.MONITOR);
         monitors.stream()
                 .filter(User::getIsActive)
@@ -81,7 +75,7 @@ public class CandidateService {
                         messageService.sendMessage(
                                 systemUser.getId(),
                                 monitor.getId(),
-                                "Кандидат обнаружен: " + unit.getId()
+                                "Candidate detected: " + unit.getId()
                         );
                     } catch (Exception e) {
                         log.error("Failed to send message to monitor {}", monitor.getId(), e);
@@ -127,10 +121,20 @@ public class CandidateService {
         return oracleRequestRepository.save(request);
     }
 
+    @Transactional(readOnly = true)
+    public List<Unit> findCandidates() {
+        return unitRepository.findByStatus(UnitStatusEnum.CANDIDATE);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Unit> getUnitsWithHighDisagreement() {
+        return unitRepository.findByDisagreementIndexGreaterThan(8.5);
+    }
+
     @Scheduled(fixedDelay = 3600000)
     @Transactional
     public void scheduledCandidateDetection() {
-        log.info("Запуск автоматического обнаружения кандидатов");
+        log.info("Starting automatic candidate detection");
         detectCandidates();
     }
 }

@@ -17,5 +17,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addConverter(new StringToSentinelTaskStatusEnumConverter());
         registry.addConverter(new StringToOracleRequestStatusEnumConverter());
         registry.addConverter(new StringToUnitStatusEnumConverter());
+        registry.addConverter(new StringToTicketImportanceEnumConverter());
+        registry.addConverter(new StringToAnomalyTypeEnumConverter());
+        registry.addConverter(new StringToTicketUnitStatusEnumConverter());
     }
 }

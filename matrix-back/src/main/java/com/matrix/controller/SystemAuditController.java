@@ -1,70 +1,45 @@
 package com.matrix.controller;
 
 import com.matrix.dto.response.ApiResponse;
-import com.matrix.entity.enums.AuditStatusEnum;
-import com.matrix.entity.enums.AuditTypeEnum;
+import com.matrix.dto.response.SystemAuditResponse;
 import com.matrix.entity.primary.SystemAudit;
-import com.matrix.service.SystemAuditService;
+import com.matrix.service.SystemAuditOrchestrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/audits")
+@RequestMapping("/api/system-audits")
 @RequiredArgsConstructor
 public class SystemAuditController extends BaseController {
 
-    private final SystemAuditService auditService;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<SystemAudit>>> getAllAudits() {
-        List<SystemAudit> audits = auditService.findAll();
-        return success(audits);
-    }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<SystemAudit>>> getAuditsByStatus(@PathVariable String status) {
-        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());  // Преобразуем строку в ENUM
-        List<SystemAudit> audits = auditService.getAuditsByStatus(statusEnum);
-        return success(audits);
-    }
-
-    @GetMapping("/initiator/{userId}")
-    public ResponseEntity<ApiResponse<List<SystemAudit>>> getAuditsByInitiator(@PathVariable Long userId) {
-        List<SystemAudit> audits = auditService.getAuditsByInitiator(userId);
-        return success(audits);
-    }
+    private final SystemAuditOrchestrationService auditService;
 
     @PostMapping("/initiate")
     public ResponseEntity<ApiResponse<SystemAudit>> initiateAudit(
-            @RequestParam String auditType,
-            @RequestParam Integer stabilityScore,
-            @RequestParam Boolean pointOfNoReturn,
-            @RequestParam Long initiatedById,
-            @RequestParam String auditData,
-            @RequestParam String status) {
-
-        AuditTypeEnum auditTypeEnum = AuditTypeEnum.valueOf(auditType.toUpperCase());
-        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());
-
-        SystemAudit audit = auditService.initiateAudit(
-                auditTypeEnum, stabilityScore, pointOfNoReturn,
-                initiatedById, auditData, statusEnum
-        );
-        return created("Audit initiated", audit);
+            @RequestParam Long initiatedById) {
+        SystemAudit audit = auditService.initiateFullSystemAudit(initiatedById);
+        return created("System audit initiated", audit);
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<Void>> updateAuditStatus(
-            @PathVariable Long id,
-            @RequestParam String status,
-            @RequestParam(required = false) Integer stabilityScore) {
+    @PostMapping("/{auditId}/perform")
+    public ResponseEntity<ApiResponse<SystemAuditResponse>> performAudit(
+            @PathVariable Long auditId) {
+        SystemAuditResponse response = auditService.performAudit(auditId);
+        return success("Audit completed", response);
+    }
 
-        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());
+    @GetMapping("/{auditId}/point-of-no-return")
+    public ResponseEntity<ApiResponse<String>> getPointOfNoReturnAnalysis(
+            @PathVariable Long auditId) {
+        String analysis = auditService.getPointOfNoReturnAnalysis(auditId);
+        return ResponseEntity.ok(new ApiResponse<>(true, analysis, null, System.currentTimeMillis()));
+    }
 
-        auditService.updateAuditStatus(id, statusEnum, stabilityScore);
-        return success("Audit status updated");
+    @PostMapping("/{auditId}/recommend-chosen-one")
+    public ResponseEntity<ApiResponse<Void>> recommendChosenOne(
+            @PathVariable Long auditId) {
+        auditService.recommendChosenOneBasedOnAudit(auditId);
+        return success("Chosen one recommendations generated");
     }
 }

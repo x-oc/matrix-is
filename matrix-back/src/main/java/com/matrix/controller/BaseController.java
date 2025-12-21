@@ -23,6 +23,10 @@ public class BaseController {
                 .body(ApiResponse.success(message, data));
     }
 
+    protected ResponseEntity<ApiResponse<?>> successVoid(String message) {
+        return ResponseEntity.ok(new ApiResponse<>(true, message, null, System.currentTimeMillis()));
+    }
+
     protected ResponseEntity<ApiResponse<Void>> created(String message) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, message, null, System.currentTimeMillis()));

@@ -1,8 +1,8 @@
 package com.matrix.dto.request;
 
-import lombok.Data;
-import jakarta.validation.constraints.NotBlank;
+import com.matrix.entity.enums.TicketUnitStatusEnum;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 @Data
 public class LinkTicketUnitRequest {
@@ -12,6 +12,6 @@ public class LinkTicketUnitRequest {
     @NotNull
     private Long unitId;
 
-    @NotBlank
-    private String status;
+    @NotNull
+    private TicketUnitStatusEnum status;
 }

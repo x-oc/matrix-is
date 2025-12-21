@@ -1,6 +1,5 @@
 package com.matrix.controller;
 
-import com.matrix.dto.request.AssignTicketRequest;
 import com.matrix.dto.request.CreateTicketRequest;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.entity.enums.RoleEnum;
@@ -30,8 +29,7 @@ public class TicketController extends BaseController {
     @PutMapping("/{id}/assign")
     public ResponseEntity<ApiResponse<Ticket>> assignTicket(
             @PathVariable Long id,
-            @Valid @RequestBody AssignTicketRequest request) {
-        RoleEnum role = RoleEnum.valueOf(request.getAssignedToRole().toUpperCase());
+            @RequestParam RoleEnum role) {
         Ticket ticket = ticketService.assignTicket(id, role);
         return success("Ticket assigned successfully", ticket);
     }
@@ -39,9 +37,8 @@ public class TicketController extends BaseController {
     @PutMapping("/{id}/status/{status}")
     public ResponseEntity<ApiResponse<Void>> updateStatus(
             @PathVariable Long id,
-            @PathVariable String status) {
-        TicketStatusEnum statusEnum = TicketStatusEnum.valueOf(status.toUpperCase());
-        ticketService.updateStatus(id, statusEnum);
+            @PathVariable TicketStatusEnum status) {
+        ticketService.updateStatus(id, status);
         return success("Ticket status updated");
     }
 
@@ -52,19 +49,16 @@ public class TicketController extends BaseController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<Ticket>>> getTicketsByStatus(@PathVariable String status) {
-        TicketStatusEnum statusEnum = TicketStatusEnum.valueOf(status.toUpperCase());
-        List<Ticket> tickets = ticketService.getTicketsByStatus(statusEnum);
+    public ResponseEntity<ApiResponse<List<Ticket>>> getTicketsByStatus(@PathVariable TicketStatusEnum status) {
+        List<Ticket> tickets = ticketService.getTicketsByStatus(status);
         return success(tickets);
     }
 
     @GetMapping("/role/{role}/status/{status}")
     public ResponseEntity<ApiResponse<List<Ticket>>> getTicketsByRoleAndStatus(
-            @PathVariable String role,
-            @PathVariable String status) {
-        RoleEnum roleEnum = RoleEnum.valueOf(role.toUpperCase());
-        TicketStatusEnum statusEnum = TicketStatusEnum.valueOf(status.toUpperCase());
-        List<Ticket> tickets = ticketService.getTicketsByRoleAndStatus(roleEnum, statusEnum);
+            @PathVariable RoleEnum role,
+            @PathVariable TicketStatusEnum status) {
+        List<Ticket> tickets = ticketService.getTicketsByRoleAndStatus(role, status);
         return success(tickets);
     }
 
