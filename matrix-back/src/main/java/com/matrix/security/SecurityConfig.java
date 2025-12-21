@@ -32,15 +32,10 @@ public class SecurityConfig {
                                            JwtAuthenticationFilter jwtAuthenticationFilter,
                                            DaoAuthenticationProvider authenticationProvider) throws Exception {
         http
+                .authorizeRequests(authorizeRequests -> authorizeRequests.anyRequest()
+                        .permitAll())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-                        .anyRequest().authenticated()
-                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
