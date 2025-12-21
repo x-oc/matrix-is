@@ -1,27 +1,56 @@
 import { useEffect, useState } from "react";
-import { dailySummary, listSimulations, simulationReport } from "../../api";
-import type { Simulation } from "../../types/types";
-import { Card, CardContent, CardActions, Button, Grid, Typography, Stack, Box, Alert, CircularProgress, Paper, Divider, Chip } from "@mui/material";
+import { 
+  getArchitectReport, 
+  generateDailyReport,
+  getLatestReport
+} from "../../api/client";
+import { Report } from "../../types/types";
+import { 
+  Card, 
+  CardContent, 
+  Button, 
+  Grid, 
+  Typography, 
+  Stack, 
+  Box, 
+  Alert, 
+  CircularProgress, 
+  Paper, 
+  Divider,
+  TextField
+} from "@mui/material";
 import { useAuth } from "../../auth/useAuth";
 import { has } from "../../auth/permissions";
+import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ru } from "date-fns/locale";
 
 export default function ReportsPage() {
   const { user } = useAuth();
   
   if (!user) return null;
 
-  const [summary, setSummary] = useState<string>("…");
-  const [sims, setSims] = useState<Simulation[]>([]);
+  const [architectReport, setArchitectReport] = useState<any>(null);
+  const [latestReport, setLatestReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [periodStart, setPeriodStart] = useState<Date>(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const [periodEnd, setPeriodEnd] = useState<Date>(new Date());
+  const [generating, setGenerating] = useState(false);
 
-  const reload = async () => {
+  const loadReports = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [sum, simList] = await Promise.all([dailySummary(), listSimulations()]);
-      setSummary(sum.text);
-      setSims(simList);
+      
+      if (has(user.role, "GENERATE_REPORTS")) {
+        const [architectReportData, latestReportData] = await Promise.all([
+          getArchitectReport(),
+          getLatestReport()
+        ]);
+        setArchitectReport(architectReportData);
+        setLatestReport(latestReportData);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки отчетов');
     } finally {
@@ -29,24 +58,27 @@ export default function ReportsPage() {
     }
   };
 
+  const handleGenerateReport = async () => {
+    try {
+      setGenerating(true);
+      const report = await generateDailyReport(
+        periodStart.toISOString(),
+        periodEnd.toISOString()
+      );
+      setLatestReport(report);
+      alert('Отчет сгенерирован');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка генерации отчета');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   useEffect(() => {
-    reload();
+    loadReports();
   }, []);
 
-  const canViewReports = has(user.role, "REPORTS_VIEW");
-  const canRefreshSimReport = has(user.role, "SIM_REPORT_REFRESH"); // обычно только MONITOR
-
-  const getStabilityColor = (stability: number) => {
-    if (stability >= 80) return "success";
-    if (stability >= 50) return "warning";
-    return "error";
-  };
-
-  const getStabilityLabel = (stability: number) => {
-    if (stability >= 80) return "Стабильная";
-    if (stability >= 50) return "Нестабильная";
-    return "Критическая";
-  };
+  const canViewReports = has(user.role, "GENERATE_REPORTS");
 
   if (loading) {
     return (
@@ -57,150 +89,167 @@ export default function ReportsPage() {
   }
 
   return (
-    <Box>
-      <Box mb={3}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Отчёты и аналитика
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Мониторинг состояния системы и персональных симуляций
-        </Typography>
-      </Box>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
+      <Box>
+        <Box mb={3}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Отчёты и аналитика
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Мониторинг состояния системы и генерация отчетов
+          </Typography>
+        </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Grid container spacing={3}>
-        {canViewReports && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Ежедневная сводка для Архитектора (UC-105)
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-                <Paper
-                  sx={{
-                    p: 2,
-                    backgroundColor: 'black',
-                    border: '1px solid',
-                    borderColor: 'grey.800',
-                    borderRadius: 1
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      whiteSpace: "pre-wrap",
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
-                      lineHeight: 1.6,
-                      color: 'white'
-                    }}
-                  >
-                    {summary}
-                  </Typography>
-                </Paper>
-              </CardContent>
-            </Card>
-          </Grid>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
         )}
 
-        {canViewReports && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Стабильность персональных симуляций (UC-404)
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-
-                <Stack spacing={2}>
-                  {sims.map((s) => (
-                    <Card key={s.id} variant="outlined">
-                      <CardContent>
-                        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                          <Typography variant="subtitle1" fontWeight="medium">
-                            {s.title}
-                          </Typography>
-                          <Chip
-                            label={getStabilityLabel(s.stability)}
-                            color={getStabilityColor(s.stability) as any}
-                            size="small"
+        <Grid container spacing={3}>
+          {canViewReports && (
+            <>
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Генерация ежедневного отчета (UC-105)
+                    </Typography>
+                    <Divider sx={{ my: 2 }} />
+                    
+                    <Stack spacing={3}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <DateTimePicker
+                            label="Начало периода"
+                            value={periodStart}
+                            onChange={(newValue) => newValue && setPeriodStart(newValue)}
+                            slotProps={{ textField: { fullWidth: true } }}
                           />
-                        </Stack>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <DateTimePicker
+                            label="Конец периода"
+                            value={periodEnd}
+                            onChange={(newValue) => newValue && setPeriodEnd(newValue)}
+                            slotProps={{ textField: { fullWidth: true } }}
+                          />
+                        </Grid>
+                      </Grid>
+                      
+                      <Button
+                        variant="contained"
+                        onClick={handleGenerateReport}
+                        disabled={generating || !periodStart || !periodEnd}
+                      >
+                        {generating ? 'Генерация...' : 'Сгенерировать отчет'}
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
 
-                        <Stack direction="row" spacing={3} mb={2}>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Стабильность
-                            </Typography>
-                            <Typography variant="body2" fontWeight="medium">
-                              {s.stability.toFixed(1)}/100
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Ресурсы
-                            </Typography>
-                            <Typography variant="body2" fontWeight="medium">
-                              {s.resources}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              Активность
-                            </Typography>
-                            <Typography variant="body2" fontWeight="medium">
-                              {s.activityScore.toFixed(1)}/100
-                            </Typography>
-                          </Box>
-                        </Stack>
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Отчет для Архитектора
+                    </Typography>
+                    <Divider sx={{ my: 2 }} />
+                    
+                    {architectReport ? (
+                      <Paper
+                        sx={{
+                          p: 3,
+                          backgroundColor: 'black',
+                          border: '1px solid',
+                          borderColor: 'grey.800',
+                          borderRadius: 1,
+                          maxHeight: 400,
+                          overflow: 'auto'
+                        }}
+                      >
+                        <pre style={{ 
+                          margin: 0, 
+                          color: '#00ff41',
+                          fontFamily: "'Courier New', monospace",
+                          fontSize: '0.9rem',
+                          whiteSpace: 'pre-wrap',
+                          wordWrap: 'break-word'
+                        }}>
+                          {JSON.stringify(architectReport, null, 2)}
+                        </pre>
+                      </Paper>
+                    ) : (
+                      <Alert severity="info">Нет данных для отчета</Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
 
-                        <Typography variant="caption" color="text.secondary">
-                          Последний отчёт: {new Date(s.lastReportAt).toLocaleString()}
-                        </Typography>
-                      </CardContent>
-                      {canRefreshSimReport && (
-                        <CardActions>
-                          <Button
-                            size="small"
-                            onClick={async () => {
-                              try {
-                                await simulationReport(s.id);
-                                await reload();
-                              } catch (err) {
-                                setError(err instanceof Error ? err.message : 'Ошибка при обновлении отчета');
-                              }
+              <Grid item xs={12} md={6}>
+                <Card sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Последний отчет
+                    </Typography>
+                    <Divider sx={{ my: 2 }} />
+                    
+                    {latestReport ? (
+                      <Box>
+                        <Stack spacing={2}>
+                          <div>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Период отчета
+                            </Typography>
+                            <Typography variant="body1">
+                              {new Date(latestReport.periodStart).toLocaleString()} - 
+                              {new Date(latestReport.periodEnd).toLocaleString()}
+                            </Typography>
+                          </div>
+                          
+                          <div>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Сгенерирован
+                            </Typography>
+                            <Typography variant="body1">
+                              {new Date(latestReport.createdAt).toLocaleString()}
+                            </Typography>
+                          </div>
+                          
+                          <Button 
+                            variant="outlined" 
+                            onClick={() => {
+                              const blob = new Blob([latestReport.generatedData], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `report_${latestReport.id}.txt`;
+                              a.click();
                             }}
                           >
-                            Обновить отчёт
+                            Скачать отчет
                           </Button>
-                        </CardActions>
-                      )}
-                    </Card>
-                  ))}
+                        </Stack>
+                      </Box>
+                    ) : (
+                      <Alert severity="info">Нет сгенерированных отчетов</Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </>
+          )}
 
-                  {sims.length === 0 && (
-                    <Card>
-                      <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                          Нет активных симуляций
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          В системе пока нет персональных симуляций для мониторинга
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </Box>
+          {!canViewReports && (
+            <Grid item xs={12}>
+              <Alert severity="warning">
+                У вас нет прав для просмотра отчетов. Обратитесь к Архитектору или Смотрителю.
+              </Alert>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
+    </LocalizationProvider>
   );
 }

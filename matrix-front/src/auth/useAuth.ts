@@ -8,7 +8,6 @@ export function useAuth() {
   return ctx;
 }
 
-// Удобный хук для получения роли текущего пользователя
 export function useRole(): { role: Role | null; isAuthenticated: boolean } {
   const { user, isAuthenticated } = useAuth();
   return {

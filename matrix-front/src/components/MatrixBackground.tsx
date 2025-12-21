@@ -18,7 +18,6 @@ export const MatrixBackground = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -30,7 +29,6 @@ export const MatrixBackground = () => {
     const digits = "0123456789";
     const characters: Digit[] = [];
 
-    // Create initial characters
     const columnCount = Math.ceil(canvas.width / 20);
     for (let i = 0; i < columnCount; i++) {
       characters.push({
@@ -45,19 +43,15 @@ export const MatrixBackground = () => {
     let animationId: number;
 
     const animate = () => {
-      // Clear canvas with semi-transparent black for trail effect
       ctx.fillStyle = "rgba(10, 10, 10, 0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw and update characters
       ctx.font = "20px 'Courier New', monospace";
       ctx.fillStyle = "#00ff41";
 
       characters.forEach((char, index) => {
-        // Update position
         char.y += char.speed;
 
-        // Reset to top if character goes off screen
         if (char.y > canvas.height) {
           char.y = -20;
           char.char = digits[Math.floor(Math.random() * digits.length)];
@@ -65,7 +59,6 @@ export const MatrixBackground = () => {
           char.opacity = Math.random() * 0.5 + 0.3;
         }
 
-        // Draw character with gradient opacity
         const gradient = ctx.createLinearGradient(0, char.y - 50, 0, char.y + 50);
         gradient.addColorStop(0, "rgba(0, 255, 65, 0)");
         gradient.addColorStop(0.5, "rgba(0, 255, 65, " + (char.opacity + 0.3) + ")");
@@ -74,7 +67,6 @@ export const MatrixBackground = () => {
         ctx.fillStyle = gradient;
         ctx.fillText(char.char, char.x, char.y);
 
-        // Randomly change character
         if (Math.random() < 0.02) {
           char.char = digits[Math.floor(Math.random() * digits.length)];
         }

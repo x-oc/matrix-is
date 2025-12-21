@@ -3,23 +3,23 @@ import { Role } from "../types/types";
 
 const labels: Record<Role, string> = {
   ARCHITECT: "🧠 Архитектор",
-  KERNEL: "⚙️ Системное Ядро",
+  SYSTEM_KERNEL: "⚙️ Системное Ядро",
   MONITOR: "👁️ Смотритель",
   AGENT_SMITH: "🕴️ Агент Смит",
   ORACLE: "🔮 Оракул",
   KEYMAKER: "🔑 Хранитель",
-  SENTINEL_CTRL: "🤖 Контроллер Сентинелей",
+  SENTINEL_CONTROLLER: "🤖 Контроллер Сентинелей",
   MECHANIC: "🛠️ Механик"
 };
 
 const roleColors: Record<Role, string> = {
   ARCHITECT: "#ff6b6b",
-  KERNEL: "#4ecdc4",
+  SYSTEM_KERNEL: "#4ecdc4",
   MONITOR: "#45b7d1",
   AGENT_SMITH: "#96ceb4",
   ORACLE: "#feca57",
   KEYMAKER: "#ff9ff3",
-  SENTINEL_CTRL: "#54a0ff",
+  SENTINEL_CONTROLLER: "#54a0ff",
   MECHANIC: "#5f27cd"
 };
 

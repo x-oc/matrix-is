@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import {
   Box, Button, Card, CardContent, Grid, MenuItem,
   Select, Stack, Typography, TextField, Alert,
-  CircularProgress, Divider, FormControl, InputLabel
+  CircularProgress, Divider, FormControl, InputLabel,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import {
   getAllTickets,
@@ -11,26 +12,37 @@ import {
   updateTicketStatus,
   escalateMassGlitch,
   addTicketComment,
-  getCommentsForTicket
-} from '../../api';
+  getCommentsForTicket,
+  createTicket
+} from '../../api/client';
 import {
-  ApiTicket,
-  Role,
+  Ticket,
+  RoleEnum,
   AnomalyTypeEnum,
-  TicketImportanceEnum,
-  TicketStatusEnum
+  TicketStatusEnum,
+  CreateTicketRequest
 } from '../../types/types';
 import { useAuth } from '../../auth/useAuth';
+import StatusChip from '../../components/StatusChip';
+import SeverityChip from '../../components/SeverityChip';
 
 export default function TicketsPage() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState<ApiTicket[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<ApiTicket | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newTicket, setNewTicket] = useState<CreateTicketRequest>({
+    title: '',
+    description: '',
+    threatLevel: 1,
+    anomalyType: AnomalyTypeEnum.PHYSICS_GLITCH,
+    matrixCoordinates: ''
+  });
 
   useEffect(() => {
     loadTickets();
@@ -72,6 +84,9 @@ export default function TicketsPage() {
     try {
       await updateTicketStatus(ticketId, status);
       await loadTickets();
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setSelectedTicket({...selectedTicket, status});
+      }
     } catch (err) {
       setError('Ошибка обновления статуса');
     }
@@ -80,7 +95,7 @@ export default function TicketsPage() {
   const handleAddComment = async () => {
     if (!selectedTicket || !newComment.trim()) return;
     try {
-      await addTicketComment(selectedTicket.id, 1, newComment); // Временный ID пользователя
+      await addTicketComment(selectedTicket.id, user?.id || 1, newComment);
       setNewComment('');
       const updatedComments = await getCommentsForTicket(selectedTicket.id);
       setComments(updatedComments);
@@ -89,13 +104,20 @@ export default function TicketsPage() {
     }
   };
 
-  // Проверка массового глитча (F-103)
-  const checkMassGlitch = async (ticketId: number) => {
+  const handleCreateTicket = async () => {
     try {
-      await escalateMassGlitch(ticketId);
-      alert('Проверка массового глитча выполнена');
+      await createTicket(newTicket);
+      setCreateDialogOpen(false);
+      setNewTicket({
+        title: '',
+        description: '',
+        threatLevel: 1,
+        anomalyType: AnomalyTypeEnum.PHYSICS_GLITCH,
+        matrixCoordinates: ''
+      });
+      await loadTickets();
     } catch (err) {
-      setError('Ошибка проверки массового глитча');
+      setError('Ошибка создания тикета');
     }
   };
 
@@ -113,30 +135,36 @@ export default function TicketsPage() {
         Управление тикетами
       </Typography>
 
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Фильтр по статусу</InputLabel>
+          <Select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            label="Фильтр по статусу"
+          >
+            <MenuItem value="ALL">Все</MenuItem>
+            {Object.values(TicketStatusEnum).map(status => (
+              <MenuItem key={status} value={status}>{status}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button variant="contained" onClick={() => setCreateDialogOpen(true)}>
+          Создать тикет
+        </Button>
+      </Box>
+
       {error && <Alert severity="error">{error}</Alert>}
 
       <Grid container spacing={3}>
-        {/* Список тикетов */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Все тикеты
+                Все тикеты ({tickets.length})
               </Typography>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Фильтр по статусу</InputLabel>
-                <Select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  label="Фильтр по статусу"
-                >
-                  <MenuItem value="ALL">Все</MenuItem>
-                  {Object.values(TicketStatusEnum).map(status => (
-                    <MenuItem key={status} value={status}>{status}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
+              
               <Stack spacing={2}>
                 {tickets.map(ticket => (
                   <Card
@@ -158,12 +186,11 @@ export default function TicketsPage() {
                       <Typography variant="body2" color="text.secondary">
                         {ticket.anomalyType}
                       </Typography>
-                      <Stack direction="row" spacing={1} mt={1}>
+                      <Stack direction="row" spacing={1} mt={1} alignItems="center">
+                        <StatusChip status={ticket.status} />
+                        <SeverityChip s={ticket.threatLevel as any} />
                         <Typography variant="caption" color="text.secondary">
-                          Статус: {ticket.status}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Уровень: {ticket.threatLevel}
+                          {new Date(ticket.createdAt).toLocaleDateString()}
                         </Typography>
                       </Stack>
                     </CardContent>
@@ -174,13 +201,12 @@ export default function TicketsPage() {
           </Card>
         </Grid>
 
-        {/* Детали тикета */}
         <Grid item xs={12} md={6}>
           {selectedTicket ? (
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Детали тикета
+                  Детали тикета #{selectedTicket.id}
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
@@ -203,7 +229,7 @@ export default function TicketsPage() {
                     <Typography variant="subtitle2" color="text.secondary">
                       Уровень угрозы
                     </Typography>
-                    <Typography variant="body1">{selectedTicket.threatLevel}</Typography>
+                    <SeverityChip s={selectedTicket.threatLevel as any} />
                   </div>
 
                   <div>
@@ -213,11 +239,24 @@ export default function TicketsPage() {
                     <Typography variant="body1">{selectedTicket.anomalyType}</Typography>
                   </div>
 
-                  {/* Действия для Monitor (UC-102) */}
-                  {user?.role === "MONITOR" && (
+                  <div>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Статус
+                    </Typography>
+                    <StatusChip status={selectedTicket.status} />
+                  </div>
+
+                  <div>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Координаты
+                    </Typography>
+                    <Typography variant="body1">{selectedTicket.matrixCoordinates}</Typography>
+                  </div>
+
+                  {user?.role === RoleEnum.MONITOR && selectedTicket.status === TicketStatusEnum.NEW && (
                     <Box>
                       <Typography variant="subtitle2" gutterBottom>
-                        Классификация и назначение
+                        Назначить исполнителя
                       </Typography>
                       <Stack direction="row" spacing={1}>
                         <Select
@@ -226,51 +265,58 @@ export default function TicketsPage() {
                           size="small"
                           displayEmpty
                         >
-                          <MenuItem value="">Назначить роль</MenuItem>
+                          <MenuItem value="">Выберите роль</MenuItem>
                           <MenuItem value="MECHANIC">Механику</MenuItem>
                           <MenuItem value="AGENT_SMITH">Агенту Смиту</MenuItem>
                         </Select>
                         <Button
                           variant="outlined"
                           size="small"
-                          onClick={() => checkMassGlitch(selectedTicket.id)}
+                          onClick={() => escalateMassGlitch(selectedTicket.id)}
                         >
-                          Проверить массовый глитч (F-103)
+                          Проверить массовый глитч
                         </Button>
                       </Stack>
                     </Box>
                   )}
 
-                  {/* Действия для Mechanic (UC-102) */}
-                  {user?.role === "MECHANIC" && selectedTicket.status === TicketStatusEnum.IN_PROGRESS && (
+                  {user?.role === RoleEnum.MECHANIC && selectedTicket.status === TicketStatusEnum.IN_PROGRESS && (
                     <Button
                       variant="contained"
-                      onClick={() => handleUpdateStatus(selectedTicket.id, 'UNDER_REVIEW')}
+                      onClick={() => handleUpdateStatus(selectedTicket.id, TicketStatusEnum.UNDER_REVIEW)}
                     >
                       Отметить как исправленное
                     </Button>
                   )}
 
-                  {/* Действия для Architect (UC-107) */}
-                  {user?.role === "ARCHITECT" && selectedTicket.status === TicketStatusEnum.ESCALATED && (
+                  {user?.role === RoleEnum.AGENT_SMITH && selectedTicket.status === TicketStatusEnum.IN_PROGRESS && (
+                    <Button
+                      variant="contained"
+                      onClick={() => handleUpdateStatus(selectedTicket.id, TicketStatusEnum.UNDER_REVIEW)}
+                    >
+                      Завершить задание
+                    </Button>
+                  )}
+
+                  {user?.role === RoleEnum.MONITOR && selectedTicket.status === TicketStatusEnum.UNDER_REVIEW && (
                     <Stack spacing={1}>
-                      <Typography variant="subtitle2">Решение Архитектора:</Typography>
+                      <Typography variant="subtitle2">Проверка результата:</Typography>
                       <Button
                         variant="outlined"
-                        onClick={() => handleUpdateStatus(selectedTicket.id, 'CLOSED')}
+                        onClick={() => handleUpdateStatus(selectedTicket.id, TicketStatusEnum.CLOSED)}
                       >
-                        Игнорировать
+                        Закрыть тикет
                       </Button>
                       <Button
                         variant="outlined"
-                        onClick={() => handleUpdateStatus(selectedTicket.id, 'IN_PROGRESS')}
+                        color="error"
+                        onClick={() => handleUpdateStatus(selectedTicket.id, TicketStatusEnum.ESCALATED)}
                       >
-                        Выделить ресурсы
+                        Эскалировать Архитектору
                       </Button>
                     </Stack>
                   )}
 
-                  {/* Комментарии */}
                   <Box>
                     <Typography variant="subtitle2" gutterBottom>
                       Комментарии
@@ -314,6 +360,59 @@ export default function TicketsPage() {
           )}
         </Grid>
       </Grid>
+
+      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}>
+        <DialogTitle>Создание нового тикета</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <TextField
+              label="Название"
+              fullWidth
+              value={newTicket.title}
+              onChange={(e) => setNewTicket({...newTicket, title: e.target.value})}
+            />
+            <TextField
+              label="Описание"
+              multiline
+              rows={3}
+              fullWidth
+              value={newTicket.description}
+              onChange={(e) => setNewTicket({...newTicket, description: e.target.value})}
+            />
+            <TextField
+              label="Уровень угрозы (1-3)"
+              type="number"
+              fullWidth
+              value={newTicket.threatLevel}
+              onChange={(e) => setNewTicket({...newTicket, threatLevel: parseInt(e.target.value) || 1})}
+              inputProps={{ min: 1, max: 3 }}
+            />
+            <FormControl fullWidth>
+              <InputLabel>Тип аномалии</InputLabel>
+              <Select
+                value={newTicket.anomalyType}
+                onChange={(e) => setNewTicket({...newTicket, anomalyType: e.target.value})}
+                label="Тип аномалии"
+              >
+                {Object.values(AnomalyTypeEnum).map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Координаты"
+              fullWidth
+              value={newTicket.matrixCoordinates}
+              onChange={(e) => setNewTicket({...newTicket, matrixCoordinates: e.target.value})}
+              placeholder="Сектор:X,Y"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialogOpen(false)}>Отмена</Button>
+          <Button variant="contained" onClick={handleCreateTicket}>Создать</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

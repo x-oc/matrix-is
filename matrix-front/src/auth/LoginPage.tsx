@@ -15,37 +15,42 @@ import {
   Container,
 } from "@mui/material";
 import { Role } from "../types/types";
-
-interface LoginPageProps {
-  onLogin: (username: string, role: Role) => void;
-}
+import { login } from "../api/client";
+import { useAuth } from "./useAuth";
 
 const roleDescriptions: Record<Role, string> = {
   ARCHITECT: "Архитектор - управляет системой и принимает критические решения",
-  KERNEL: "Ядро - создает глитчи и обнаруживает кандидатов",
+  SYSTEM_KERNEL: "Системное Ядро - создает глитчи и обнаруживает кандидатов",
   MONITOR: "Смотритель - классифицирует и эскалирует тикеты",
   AGENT_SMITH: "Агент Смит - выполняет задания и анализирует кандидатов",
   ORACLE: "Оракул - предсказывает судьбы кандидатов",
-  KEYMAKER: "Ключник - работает с программами-сиротами",
-  SENTINEL_CTRL: "Контроллер Сентинелей - управляет защитными системами",
+  KEYMAKER: "Хранитель - работает с точками доступа",
+  SENTINEL_CONTROLLER: "Контроллер Сентинелей - управляет защитными системами",
   MECHANIC: "Механик - исправляет технические проблемы",
 };
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+export default function LoginPage() {
+  const { login: authLogin } = useAuth();
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("MONITOR");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username.trim()) {
-      setError("Введите имя пользователя");
+    if (!username.trim() || !password.trim()) {
+      setError("Введите имя пользователя и пароль");
       return;
     }
 
-    setError("");
-    onLogin(username.trim(), role);
+    try {
+      setError("");
+      const authResponse = await login(username.trim(), password.trim());
+      authLogin(username.trim(), authResponse.role, authResponse.userId);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Ошибка авторизации");
+    }
   };
 
   return (
@@ -106,6 +111,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               autoFocus
             />
 
+            <TextField
+              fullWidth
+              label="Пароль"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
+              autoComplete="current-password"
+            />
+
             <FormControl fullWidth margin="normal" required>
               <InputLabel>Роль</InputLabel>
               <Select
@@ -156,7 +172,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
 
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center", display: "block" }}>
-            Внимание: роль нельзя будет изменить после входа
+            Для демо используйте данные из базы данных
           </Typography>
         </Paper>
       </Box>

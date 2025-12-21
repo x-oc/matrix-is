@@ -7,12 +7,12 @@ import { useAuth } from '../auth/useAuth';
 import { has } from '../auth/permissions';
 import {
   getDashboardSummary,
-  kernelDetectGlitch,
-  kernelDetectCandidate,
+  createGlitchTicket,
+  autoDetectAndCreateTickets,
   getAllTickets,
   getAllUnits
 } from '../api/client';
-import { RoleEnum } from '../types/types';
+import { RoleEnum, CreateTicketRequest, AnomalyTypeEnum } from '../types/types';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -21,10 +21,12 @@ export default function Dashboard() {
   const [unitCount, setUnitCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [glitchData, setGlitchData] = useState({
+  const [glitchData, setGlitchData] = useState<CreateTicketRequest>({
     title: 'Глитч текстуры',
     description: 'Рябь стен в секторе S-12',
-    massImpact: false
+    threatLevel: 1,
+    anomalyType: AnomalyTypeEnum.VISUAL_ARTIFACT,
+    matrixCoordinates: 'S-12:45.67,89.12'
   });
 
   useEffect(() => {
@@ -74,15 +76,14 @@ export default function Dashboard() {
       )}
 
       <Grid container spacing={3}>
-        {/* Статистика системы */}
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Открытые инциденты
+                Открытые тикеты
               </Typography>
               <Typography variant="h4" color="error">
-                {summary?.openIncidents || 0}
+                {summary?.openTickets || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Всего тикетов: {ticketCount}
@@ -98,10 +99,10 @@ export default function Dashboard() {
                 Кандидаты
               </Typography>
               <Typography variant="h4" color="warning.main">
-                {summary?.candidates || 0}
+                {summary?.totalCandidates || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Всего юнитов: {unitCount}
+                Проснувшиеся: {summary?.awakenedUnits || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -111,29 +112,29 @@ export default function Dashboard() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Закрыто сегодня
+                Высокий приоритет
+              </Typography>
+              <Typography variant="h4" color="error">
+                {summary?.highPriorityTickets || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Критические тикеты
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Активные пользователи
               </Typography>
               <Typography variant="h4" color="success.main">
-                {summary?.closedToday || 0}
+                {summary?.activeUsers || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                За последние 24 часа
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Программы-сироты
-              </Typography>
-              <Typography variant="h4" color="info.main">
-                {summary?.orphanPrograms || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Требуют решения
+                В системе сейчас
               </Typography>
             </CardContent>
           </Card>
@@ -163,24 +164,25 @@ export default function Dashboard() {
                     rows={3}
                     style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                   />
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={glitchData.massImpact}
-                      onChange={(e) => setGlitchData({...glitchData, massImpact: e.target.checked})}
-                    />
-                    Массовый эффект (более 100 юнитов)
-                  </label>
+                  <input
+                    type="text"
+                    value={glitchData.matrixCoordinates}
+                    onChange={(e) => setGlitchData({...glitchData, matrixCoordinates: e.target.value})}
+                    placeholder="Координаты (Сектор:X,Y)"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
                   <Button
                     variant="contained"
                     onClick={async () => {
                       try {
-                        await kernelDetectGlitch(glitchData);
+                        await createGlitchTicket(glitchData);
                         alert('Тикет создан');
                         setGlitchData({
                           title: '',
                           description: '',
-                          massImpact: false
+                          threatLevel: 1,
+                          anomalyType: AnomalyTypeEnum.VISUAL_ARTIFACT,
+                          matrixCoordinates: ''
                         });
                       } catch (err) {
                         setError('Ошибка создания тикета');
@@ -205,32 +207,22 @@ export default function Dashboard() {
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
-                  <input
-                    type="text"
-                    placeholder="Имя кандидата"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Индекс несогласия"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                  />
                   <Button
                     variant="contained"
                     onClick={async () => {
                       try {
-                        await kernelDetectCandidate('Subject', 8.5);
-                        alert('Кандидат обнаружен');
+                        await autoDetectAndCreateTickets();
+                        alert('Обнаружение кандидатов запущено');
                       } catch (err) {
                         setError('Ошибка обнаружения кандидата');
                       }
                     }}
                   >
-                    Создать досье
+                    Запустить обнаружение кандидатов
                   </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    Система автоматически обнаружит юнитов с индексом несогласия больше 8.5
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>

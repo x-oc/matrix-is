@@ -2,26 +2,32 @@ import { useState, useEffect } from 'react';
 import {
   Card, CardContent, Button, Grid, Typography, Stack,
   Box, Alert, RadioGroup, FormControlLabel, Radio,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  CircularProgress, List, ListItem, ListItemText, Divider
 } from '@mui/material';
 import {
   getAllAudits,
   initiateAudit,
-  updateAuditStatus,
+  performAudit,
+  getPointOfNoReturnAnalysis,
+  getCandidateUnits,
   selectChosenOne,
   getAllUnits
-} from '../../api';
-import { SystemAudit, ApiUnit, Role } from '../../types/types';
+} from '../../api/client';
+import { SystemAudit, Unit, RoleEnum } from '../../types/types';
 import { useAuth } from '../../auth/useAuth';
 
 export default function RebootPage() {
   const { user } = useAuth();
   const [audits, setAudits] = useState<SystemAudit[]>([]);
-  const [candidates, setCandidates] = useState<ApiUnit[]>([]);
+  const [candidates, setCandidates] = useState<Unit[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
-  const [decision, setDecision] = useState('');
+  const [interviewText, setInterviewText] = useState('');
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [interviewDialog, setInterviewDialog] = useState(false);
+  const [analysisDialog, setAnalysisDialog] = useState(false);
+  const [pointOfNoReturn, setPointOfNoReturn] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -35,34 +41,44 @@ export default function RebootPage() {
         getAllUnits()
       ]);
       setAudits(auditsData);
-      // Фильтруем кандидатов для выбора Избранного
-      setCandidates(unitsData.filter(u => u.status === 'Candidate'));
+      setCandidates(unitsData.filter(u => u.status === 'CANDIDATE' || u.disagreementIndex > 8));
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
     } finally {
       setLoading(false);
     }
   };
 
-  // UC-301: Инициация аудита
   const handleStartAudit = async () => {
     try {
-      await initiateAudit(
-        'FULL_SYSTEM_AUDIT',
-        75, // stabilityScore
-        false, // pointOfNoReturn
-        1, // initiatedById (временное значение)
-        'Полный аудит системы', // auditData
-        'STARTED' // status
-      );
-      await loadData();
+      await initiateAudit(user?.id || 1);
       alert('Аудит запущен');
+      await loadData();
     } catch (err) {
-      alert('Ошибка запуска аудита');
+      setError('Ошибка запуска аудита');
     }
   };
 
-  // UC-302: Выбор Избранного
+  const handlePerformAudit = async (auditId: number) => {
+    try {
+      await performAudit(auditId);
+      alert('Аудит выполнен');
+      await loadData();
+    } catch (err) {
+      setError('Ошибка выполнения аудита');
+    }
+  };
+
+  const handleGetPointOfNoReturn = async (auditId: number) => {
+    try {
+      const analysis = await getPointOfNoReturnAnalysis(auditId);
+      setPointOfNoReturn(analysis);
+      setAnalysisDialog(true);
+    } catch (err) {
+      setError('Ошибка получения анализа');
+    }
+  };
+
   const handleSelectChosenOne = async () => {
     if (!selectedCandidate) {
       alert('Выберите кандидата');
@@ -71,34 +87,37 @@ export default function RebootPage() {
     try {
       await selectChosenOne(
         selectedCandidate,
-        1, // selectedById (временное значение)
-        1 // matrixIterationId (временное значение)
+        user?.id || 1,
+        1 // matrixIterationId
       );
       alert('Избранный выбран');
       setSelectedCandidate(null);
+      await loadData();
     } catch (err) {
-      alert('Ошибка выбора Избранного');
+      setError('Ошибка выбора Избранного');
     }
   };
 
-  // UC-304: Финальное интервью
-  const handleFinalInterview = () => {
-    setDialogOpen(true);
-  };
-
   const submitFinalDecision = () => {
-    // Здесь должен быть вызов API для сохранения решения
-    console.log('Решение:', decision);
-    setDialogOpen(false);
-    setDecision('');
+    console.log('Решение по интервью:', interviewText);
+    setInterviewDialog(false);
+    setInterviewText('');
     alert('Решение зафиксировано');
   };
 
-  if (user?.role !== "ARCHITECT") {
+  if (user?.role !== RoleEnum.ARCHITECT) {
     return (
-      <Alert severity="error">
+      <Alert severity="error" sx={{ mt: 2 }}>
         Доступ запрещен. Только Архитектор может управлять перезагрузкой.
       </Alert>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
     );
   }
 
@@ -107,6 +126,8 @@ export default function RebootPage() {
       <Typography variant="h4" gutterBottom>
         Управление перезагрузкой системы
       </Typography>
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Grid container spacing={3}>
         {/* UC-301: Аудит системы */}
@@ -120,24 +141,50 @@ export default function RebootPage() {
                 <Button variant="contained" onClick={handleStartAudit}>
                   Запустить полный аудит
                 </Button>
-                {audits.map(audit => (
-                  <Box key={audit.id} sx={{ p: 2, border: '1px solid #ccc', borderRadius: 1 }}>
-                    <Typography variant="subtitle2">
-                      Тип: {audit.auditType}
-                    </Typography>
-                    <Typography variant="body2">
-                      Статус: {audit.status}
-                    </Typography>
-                    <Typography variant="body2">
-                      Стабильность: {audit.stabilityScore}
-                    </Typography>
-                    {audit.pointOfNoReturn && (
-                      <Alert severity="warning" sx={{ mt: 1 }}>
-                        Точка невозврата достигнута
-                      </Alert>
-                    )}
-                  </Box>
-                ))}
+                
+                <List>
+                  {audits.map(audit => (
+                    <Box key={audit.id} sx={{ mb: 2, p: 2, border: '1px solid #ccc', borderRadius: 1 }}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                        <div>
+                          <Typography variant="subtitle2">
+                            Тип: {audit.auditType}
+                          </Typography>
+                          <Typography variant="body2">
+                            Статус: {audit.status}
+                          </Typography>
+                          <Typography variant="body2">
+                            Стабильность: {audit.stabilityScore}/100
+                          </Typography>
+                        </div>
+                        
+                        <Stack spacing={1}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handlePerformAudit(audit.id)}
+                            disabled={audit.status !== 'STARTED'}
+                          >
+                            Выполнить аудит
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleGetPointOfNoReturn(audit.id)}
+                          >
+                            Анализ точки невозврата
+                          </Button>
+                        </Stack>
+                      </Stack>
+                      
+                      {audit.pointOfNoReturn && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                          Точка невозврата достигнута!
+                        </Alert>
+                      )}
+                    </Box>
+                  ))}
+                </List>
               </Stack>
             </CardContent>
           </Card>
@@ -151,26 +198,38 @@ export default function RebootPage() {
                 Выбор Избранного (UC-302)
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Кандидаты для выбора:
+                Кандидаты для выбора (индекс несогласия больше 8):
               </Typography>
-              <RadioGroup value={selectedCandidate} onChange={(e) => setSelectedCandidate(Number(e.target.value))}>
-                {candidates.map(candidate => (
-                  <FormControlLabel
-                    key={candidate.id}
-                    value={candidate.id}
-                    control={<Radio />}
-                    label={`Юнит #${candidate.id} (Индекс: ${candidate.disagreementIndex})`}
-                  />
-                ))}
-              </RadioGroup>
-              <Button
-                variant="contained"
-                onClick={handleSelectChosenOne}
-                disabled={!selectedCandidate}
-                sx={{ mt: 2 }}
-              >
-                Выбрать Избранного
-              </Button>
+              
+              {candidates.length === 0 ? (
+                <Alert severity="info">Нет подходящих кандидатов</Alert>
+              ) : (
+                <>
+                  <RadioGroup 
+                    value={selectedCandidate} 
+                    onChange={(e) => setSelectedCandidate(Number(e.target.value))}
+                    sx={{ mb: 2 }}
+                  >
+                    {candidates.map(candidate => (
+                      <FormControlLabel
+                        key={candidate.id}
+                        value={candidate.id}
+                        control={<Radio />}
+                        label={`Юнит #${candidate.id} (Индекс: ${candidate.disagreementIndex.toFixed(2)})`}
+                      />
+                    ))}
+                  </RadioGroup>
+                  
+                  <Button
+                    variant="contained"
+                    onClick={handleSelectChosenOne}
+                    disabled={!selectedCandidate}
+                    sx={{ mt: 2 }}
+                  >
+                    Выбрать Избранного
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -182,7 +241,7 @@ export default function RebootPage() {
               <Typography variant="h6" gutterBottom>
                 Финальное интервью (UC-304)
               </Typography>
-              <Button variant="contained" onClick={handleFinalInterview}>
+              <Button variant="contained" onClick={() => setInterviewDialog(true)}>
                 Начать финальное интервью
               </Button>
             </CardContent>
@@ -191,7 +250,7 @@ export default function RebootPage() {
       </Grid>
 
       {/* Диалог финального интервью */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={interviewDialog} onClose={() => setInterviewDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>Финальное интервью с Избранным</DialogTitle>
         <DialogContent>
           <Typography variant="body1" paragraph>
@@ -201,16 +260,29 @@ export default function RebootPage() {
             multiline
             rows={6}
             fullWidth
-            value={decision}
-            onChange={(e) => setDecision(e.target.value)}
+            value={interviewText}
+            onChange={(e) => setInterviewText(e.target.value)}
             placeholder="Введите решение Избранного и свои комментарии..."
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Отмена</Button>
+          <Button onClick={() => setInterviewDialog(false)}>Отмена</Button>
           <Button onClick={submitFinalDecision} variant="contained">
             Зафиксировать решение
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог анализа точки невозврата */}
+      <Dialog open={analysisDialog} onClose={() => setAnalysisDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Анализ точки невозврата</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+            {pointOfNoReturn || 'Загрузка анализа...'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAnalysisDialog(false)}>Закрыть</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -1,9 +1,9 @@
 import axios from 'axios';
-import {
-  User, Ticket, Unit, OracleRequest, Forecast, SystemAudit,
+import type {
+  Ticket, Unit, OracleRequest, Forecast, SystemAudit,
   SentinelTask, Report, ChosenOne, CreateTicketRequest,
-  CreateSentinelTaskRequest, LinkTicketUnitRequest, ApiResponse,
-  AuthResponse, TicketComment
+  AuthResponse, ApiResponse, DashboardSummaryResponse,
+  OraclePredictionResponse, User, TicketComment
 } from '../types/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -54,7 +54,7 @@ api.interceptors.response.use(
   }
 );
 
-// Auth
+// ========== AUTH ==========
 export const login = async (username: string, password: string): Promise<AuthResponse> => {
   const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', { username, password });
   const { data } = response.data;
@@ -72,14 +72,35 @@ export const refreshToken = async (token: string): Promise<AuthResponse> => {
   return response.data.data;
 };
 
-// Tickets
-export const createTicket = async (request: CreateTicketRequest): Promise<Ticket> => {
-  const response = await api.post<ApiResponse<Ticket>>('/tickets', request);
+// ========== DASHBOARD ==========
+export const getDashboardSummary = async (): Promise<DashboardSummaryResponse> => {
+  const response = await api.get<ApiResponse<DashboardSummaryResponse>>('/dashboard/summary');
   return response.data.data;
 };
 
+export const getTicketStatusStatistics = async (): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>('/dashboard/tickets/status');
+  return response.data.data;
+};
+
+export const getCandidateStatistics = async (): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>('/dashboard/candidates/stats');
+  return response.data.data;
+};
+
+export const getSystemHealthMetrics = async (): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>('/dashboard/system/health');
+  return response.data.data;
+};
+
+// ========== TICKETS ==========
 export const getAllTickets = async (): Promise<Ticket[]> => {
   const response = await api.get<ApiResponse<Ticket[]>>('/tickets');
+  return response.data.data;
+};
+
+export const createTicket = async (request: CreateTicketRequest): Promise<Ticket> => {
+  const response = await api.post<ApiResponse<Ticket>>('/tickets', request);
   return response.data.data;
 };
 
@@ -88,9 +109,14 @@ export const getTicketsByStatus = async (status: string): Promise<Ticket[]> => {
   return response.data.data;
 };
 
+export const getTicketsByRoleAndStatus = async (role: string, status: string): Promise<Ticket[]> => {
+  const response = await api.get<ApiResponse<Ticket[]>>(`/tickets/role/${role}/status/${status}`);
+  return response.data.data;
+};
+
 export const assignTicket = async (id: number, role: string): Promise<Ticket> => {
-  const response = await api.put<ApiResponse<Ticket>>(`/tickets/${id}/assign`, {
-    assignedToRole: role
+  const response = await api.put<ApiResponse<Ticket>>(`/tickets/${id}/assign`, null, {
+    params: { role }
   });
   return response.data.data;
 };
@@ -103,9 +129,58 @@ export const escalateMassGlitch = async (id: number): Promise<void> => {
   await api.post<ApiResponse<void>>(`/tickets/${id}/escalate-mass-glitch`);
 };
 
-// Units (Candidates)
+// ========== TICKET COMMENTS ==========
+export const addTicketComment = async (ticketId: number, createdBy: number, comment: string): Promise<TicketComment> => {
+  const response = await api.post<ApiResponse<TicketComment>>('/ticket-comments', {
+    ticketId,
+    createdBy,
+    comment
+  });
+  return response.data.data;
+};
+
+export const getCommentsForTicket = async (ticketId: number): Promise<TicketComment[]> => {
+  const response = await api.get<ApiResponse<TicketComment[]>>(`/ticket-comments/ticket/${ticketId}`);
+  return response.data.data;
+};
+
+// ========== TICKET WORKFLOW ==========
+export const startWork = async (ticketId: number, userId: number): Promise<void> => {
+  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/start-work`, null, {
+    params: { userId }
+  });
+};
+
+export const submitForReview = async (ticketId: number, userId: number): Promise<void> => {
+  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/submit-for-review`, null, {
+    params: { userId }
+  });
+};
+
+export const closeTicket = async (ticketId: number, userId: number): Promise<void> => {
+  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/close`, null, {
+    params: { userId }
+  });
+};
+
+export const getAssignedToMechanic = async (): Promise<Ticket[]> => {
+  const response = await api.get<ApiResponse<Ticket[]>>('/ticket-workflow/mechanic/assigned');
+  return response.data.data;
+};
+
+export const getAssignedToAgentSmith = async (): Promise<Ticket[]> => {
+  const response = await api.get<ApiResponse<Ticket[]>>('/ticket-workflow/agent-smith/assigned');
+  return response.data.data;
+};
+
+// ========== UNITS ==========
 export const getAllUnits = async (): Promise<Unit[]> => {
   const response = await api.get<ApiResponse<Unit[]>>('/units');
+  return response.data.data;
+};
+
+export const getUnitById = async (id: number): Promise<Unit> => {
+  const response = await api.get<ApiResponse<Unit>>(`/units/${id}`);
   return response.data.data;
 };
 
@@ -126,15 +201,18 @@ export const selectChosenOne = async (unitId: number, selectedBy: number, matrix
   return response.data.data;
 };
 
-// Oracle
-export const requestOraclePrediction = async (unitId: number, requestedBy: number): Promise<void> => {
-  await api.post<ApiResponse<void>>('/oracle/request-prediction', { unitId, requestedBy });
+// ========== ORACLE ==========
+export const requestOraclePrediction = async (unitId: number, requestedBy: number, additionalContext?: string): Promise<OracleRequest> => {
+  const response = await api.post<ApiResponse<OracleRequest>>('/oracle/request-prediction', {
+    unitId,
+    requestedBy,
+    additionalContext
+  });
+  return response.data.data;
 };
 
-export const processPrediction = async (requestId: number, forecast: string): Promise<Forecast> => {
-  const response = await api.post<ApiResponse<Forecast>>(`/oracle/process-prediction/${requestId}`, null, {
-    params: { forecast }
-  });
+export const processPrediction = async (requestId: number): Promise<OraclePredictionResponse> => {
+  const response = await api.post<ApiResponse<OraclePredictionResponse>>(`/oracle/process-prediction/${requestId}`);
   return response.data.data;
 };
 
@@ -148,46 +226,53 @@ export const getForecastsByUnit = async (unitId: number): Promise<Forecast[]> =>
   return response.data.data;
 };
 
-// System Audits
+export const getLatestPredictionForUnit = async (unitId: number): Promise<OraclePredictionResponse | null> => {
+  const response = await api.get<ApiResponse<OraclePredictionResponse>>(`/oracle/predictions/unit/${unitId}/latest`);
+  return response.data.data;
+};
+
+// ========== SYSTEM AUDITS ==========
 export const getAllAudits = async (): Promise<SystemAudit[]> => {
-  const response = await api.get<ApiResponse<SystemAudit[]>>('/audits');
+  const response = await api.get<ApiResponse<SystemAudit[]>>('/system-audits');
   return response.data.data;
 };
 
-export const initiateAudit = async (
-  auditType: string,
-  stabilityScore: number,
-  pointOfNoReturn: boolean,
-  initiatedById: number,
-  auditData: string,
-  status: string
-): Promise<SystemAudit> => {
-  const response = await api.post<ApiResponse<SystemAudit>>('/audits/initiate', null, {
-    params: {
-      auditType,
-      stabilityScore,
-      pointOfNoReturn,
-      initiatedById,
-      auditData,
-      status
-    }
+export const initiateAudit = async (initiatedById: number): Promise<SystemAudit> => {
+  const response = await api.post<ApiResponse<SystemAudit>>('/system-audits/initiate', null, {
+    params: { initiatedById }
   });
   return response.data.data;
 };
 
-export const updateAuditStatus = async (
-  id: number,
+export const performAudit = async (auditId: number): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>(`/system-audits/${auditId}/perform`);
+  return response.data.data;
+};
+
+export const getPointOfNoReturnAnalysis = async (auditId: number): Promise<string> => {
+  const response = await api.get<ApiResponse<string>>(`/system-audits/${auditId}/point-of-no-return`);
+  return response.data.data;
+};
+
+export const recommendChosenOneBasedOnAudit = async (auditId: number): Promise<void> => {
+  await api.post<ApiResponse<void>>(`/system-audits/${auditId}/recommend-chosen-one`);
+};
+
+// ========== SENTINEL TASKS ==========
+export const createSentinelTask = async (
+  createdBy: number,
   status: string,
-  stabilityScore?: number
-): Promise<void> => {
-  await api.put<ApiResponse<void>>(`/audits/${id}/status`, null, {
-    params: { status, stabilityScore }
+  sentinelCount: number,
+  locationId: number,
+  description?: string
+): Promise<SentinelTask> => {
+  const response = await api.post<ApiResponse<SentinelTask>>('/sentinel-tasks', {
+    createdBy,
+    status,
+    sentinelCount,
+    locationId,
+    description
   });
-};
-
-// Sentinel Tasks
-export const createSentinelTask = async (request: CreateSentinelTaskRequest): Promise<SentinelTask> => {
-  const response = await api.post<ApiResponse<SentinelTask>>('/sentinel-tasks', request);
   return response.data.data;
 };
 
@@ -201,7 +286,43 @@ export const getActiveSentinelTasks = async (): Promise<SentinelTask[]> => {
   return response.data.data;
 };
 
-// Reports
+export const getSentinelTasksByStatus = async (status: string): Promise<SentinelTask[]> => {
+  const response = await api.get<ApiResponse<SentinelTask[]>>(`/sentinel-tasks/status/${status}`);
+  return response.data.data;
+};
+
+export const updateSentinelTaskStatus = async (id: number, status: string): Promise<SentinelTask> => {
+  const response = await api.put<ApiResponse<SentinelTask>>(`/sentinel-tasks/${id}/status`, null, {
+    params: { status }
+  });
+  return response.data.data;
+};
+
+// ========== SENTINEL STRIKE ==========
+export const requestSentinelStrike = async (
+  targetCoordinates: string,
+  sentinelCount: number,
+  priority: string,
+  requestedById: number
+): Promise<void> => {
+  await api.post<ApiResponse<void>>('/sentinels/strike', {
+    targetCoordinates,
+    sentinelCount,
+    priority,
+    requestedById
+  });
+};
+
+export const getSentinelStrikeStatus = async (requestId: number): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>(`/sentinels/strike/status/${requestId}`);
+  return response.data.data;
+};
+
+export const executeSentinelStrike = async (requestId: number): Promise<void> => {
+  await api.post<ApiResponse<void>>(`/sentinels/strike/${requestId}/execute`);
+};
+
+// ========== REPORTS ==========
 export const generateDailyReport = async (periodStart: string, periodEnd: string): Promise<Report> => {
   const response = await api.post<ApiResponse<Report>>('/reports/generate-daily', null, {
     params: { periodStart, periodEnd }
@@ -214,35 +335,19 @@ export const getLatestReport = async (): Promise<Report> => {
   return response.data.data;
 };
 
-// Ticket-Unit Linking (UC-103 массовые эффекты)
-export const linkTicketToUnit = async (request: LinkTicketUnitRequest): Promise<any> => {
-  const response = await api.post<ApiResponse<any>>('/ticket-units/link', request);
+export const getArchitectReport = async (): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>('/reports/for-architect');
   return response.data.data;
 };
 
-export const checkMassGlitch = async (ticketId: number): Promise<boolean> => {
-  const response = await api.get<ApiResponse<boolean>>(`/ticket-units/mass-glitch-check/${ticketId}`);
-  return response.data.data;
-};
-
-// Ticket Comments
-export const addTicketComment = async (ticketId: number, createdBy: number, comment: string): Promise<TicketComment> => {
-  const response = await api.post<ApiResponse<TicketComment>>('/ticket-comments', {
-    ticketId,
-    createdBy,
-    comment
-  });
-  return response.data.data;
-};
-
-export const getCommentsForTicket = async (ticketId: number): Promise<TicketComment[]> => {
-  const response = await api.get<ApiResponse<TicketComment[]>>(`/ticket-comments/ticket/${ticketId}`);
-  return response.data.data;
-};
-
-// Users
+// ========== USERS ==========
 export const getAllUsers = async (): Promise<User[]> => {
   const response = await api.get<ApiResponse<User[]>>('/users');
+  return response.data.data;
+};
+
+export const getActiveUsers = async (): Promise<User[]> => {
+  const response = await api.get<ApiResponse<User[]>>('/users/active');
   return response.data.data;
 };
 
@@ -251,481 +356,210 @@ export const getUsersByRole = async (role: string): Promise<User[]> => {
   return response.data.data;
 };
 
-// ========== ДОБАВЛЕННЫЕ ФУНКЦИИ ДЛЯ UC СЦЕНАРИЕВ ==========
-
-export const listOrphans = async (): Promise<any[]> => {
-  try {
-    const response = await api.get<ApiResponse<any[]>>('/orphans');
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for listOrphans');
-    return [
-      { id: '1', name: 'Old Concierge Bot', purpose: null, status: 'Orphaned' },
-      { id: '2', name: 'Legacy Calculator', purpose: 'Arithmetic operations', status: 'Saved', simulationId: 'sim1' },
-      { id: '3', name: 'Weather Predictor v1', purpose: 'Outdated weather algorithm', status: 'Orphaned' }
-    ];
-  }
+export const getUserById = async (id: number): Promise<User> => {
+  const response = await api.get<ApiResponse<User>>(`/users/${id}`);
+  return response.data.data;
 };
 
-export const decideOrphan = async (orphanId: string, decision: "Save" | "Delete"): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/orphans/${orphanId}/decide`, { decision });
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for decideOrphan');
-    return {
-      id: orphanId,
-      decision,
-      status: decision === 'Save' ? 'Saved' : 'Deleted',
-      updatedAt: new Date().toISOString()
-    };
-  }
+export const updateUserStatus = async (id: number, isActive: boolean): Promise<User> => {
+  const response = await api.put<ApiResponse<User>>(`/users/${id}/status`, null, {
+    params: { isActive }
+  });
+  return response.data.data;
 };
 
-export const createPersonalSimulation = async (orphanId: string, title: string, resources: number): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>('/simulations', {
-      orphanId,
-      title,
-      resources
-    });
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for createPersonalSimulation');
-    const simulation = {
-      id: `sim-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title,
-      stability: 85 + Math.random() * 15,
-      resources,
-      activityScore: 10 + Math.random() * 30,
-      lastReportAt: new Date().toISOString(),
-      orphanId
-    };
-    return simulation;
-  }
+// ========== SYSTEM KERNEL ==========
+export const createGlitchTicket = async (request: any): Promise<Ticket> => {
+  const response = await api.post<ApiResponse<Ticket>>('/kernel/glitch', request);
+  return response.data.data;
 };
 
-export const listSimulations = async (): Promise<any[]> => {
-  try {
-    const response = await api.get<ApiResponse<any[]>>('/simulations');
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for listSimulations');
-    return [
-      {
-        id: 'sim1',
-        title: 'Legacy Calculator Simulation',
-        stability: 92,
-        resources: 50,
-        activityScore: 45,
-        lastReportAt: new Date(Date.now() - 86400000).toISOString(),
-        orphanId: '2'
-      },
-      {
-        id: 'sim2',
-        title: 'Weather Predictor Environment',
-        stability: 78,
-        resources: 30,
-        activityScore: 22,
-        lastReportAt: new Date().toISOString(),
-        orphanId: '3'
-      }
-    ];
-  }
+export const autoDetectAndCreateTickets = async (): Promise<void> => {
+  await api.post<ApiResponse<void>>('/kernel/candidate');
 };
 
-export const dailySummary = async (): Promise<{ text: string }> => {
-  try {
-    const response = await api.get<ApiResponse<{ text: string }>>('/reports/daily-summary');
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for dailySummary');
-    return { 
-      text: `📊 Ежедневная сводка (${new Date().toLocaleDateString()})
-      
-      📈 Открытые инциденты: 15
-      ✅ Закрыто сегодня: 8
-      👥 Активные кандидаты: 12
-      💾 Программы-сироты: 3
-      ⚠️  Критические тикеты: 2
-      🎯 Стабильность системы: 94%`
-    };
-  }
+export const escalateToHighPriority = async (ticketId: number, affectedUnits: number): Promise<void> => {
+  await api.post<ApiResponse<void>>(`/kernel/escalate/${ticketId}`, null, {
+    params: { affectedUnits }
+  });
 };
 
-export const simulationReport = async (simId: string): Promise<any> => {
-  try {
-    const response = await api.get<ApiResponse<any>>(`/simulations/${simId}/report`);
-    return response.data.data;
-  } catch (error) {
-    console.log('Using mock data for simulationReport');
-    const baseSim = {
-      id: simId,
-      title: 'Simulation Report',
-      stability: 85 + Math.random() * 10 - 5,
-      resources: 50,
-      activityScore: 45 + Math.random() * 10 - 5,
-      lastReportAt: new Date().toISOString()
-    };
-    
-    if (simId === 'sim1') {
-      return {
-        ...baseSim,
-        title: 'Legacy Calculator Simulation',
-        stability: 92 + Math.random() * 4 - 2,
-        resources: 50,
-        activityScore: 45 + Math.random() * 8 - 4,
-        metrics: {
-          cpuUsage: '24%',
-          memoryUsage: '128MB',
-          uptime: '45 days',
-          anomalies: 2
-        }
-      };
-    }
-    
-    return baseSim;
-  }
+// ========== TICKET-UNIT LINKING ==========
+export const linkTicketToUnit = async (ticketId: number, unitId: number, status: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/ticket-units/link', {
+    ticketId,
+    unitId,
+    status
+  });
+  return response.data.data;
 };
 
-export const listTickets = async (): Promise<any[]> => {
-  try {
-    const response = await api.get<ApiResponse<any[]>>('/tickets/uc');
-    return response.data.data;
-  } catch (error) {
-    const tickets = await getAllTickets();
-    return tickets.map(ticket => ({
-      id: ticket.id.toString(),
-      kind: ticket.anomalyType,
-      title: ticket.title,
-      description: ticket.description,
-      sector: ticket.sector,
-      severity: ticket.threatLevel,
-      assigneeRole: ticket.assignedToRole,
-      status: ticket.status,
-      createdAt: ticket.createdAt,
-      updatedAt: ticket.updatedAt
-    }));
-  }
+export const getTicketUnitsByTicket = async (ticketId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/ticket-units/ticket/${ticketId}`);
+  return response.data.data;
 };
 
-export const getTicket = async (ticketId: string): Promise<any> => {
-  try {
-    const response = await api.get<ApiResponse<any>>(`/tickets/uc/${ticketId}`);
-    return response.data.data;
-  } catch (error) {
-    const tickets = await getAllTickets();
-    const ticket = tickets.find(t => t.id.toString() === ticketId || t.id === ticketId);
-    if (!ticket) return null;
-    
-    return {
-      id: ticket.id.toString(),
-      kind: ticket.anomalyType,
-      title: ticket.title,
-      description: ticket.description,
-      sector: ticket.sector,
-      severity: ticket.threatLevel,
-      assigneeRole: ticket.assignedToRole,
-      status: ticket.status,
-      createdAt: ticket.createdAt,
-      updatedAt: ticket.updatedAt
-    };
-  }
+export const getTicketUnitsByUnit = async (unitId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/ticket-units/unit/${unitId}`);
+  return response.data.data;
 };
 
-export const monitorClassifyAndAssign = async (ticketId: string, severity: number, to: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/tickets/${ticketId}/classify`, {
-      severity,
-      assignTo: to
-    });
-    return response.data.data;
-  } catch (error) {
-    await updateTicketStatus(parseInt(ticketId), 'IN_PROGRESS');
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      severity,
-      assigneeRole: to,
-      status: 'IN_PROGRESS'
-    };
-  }
+export const updateTicketUnitStatus = async (id: number, status: string): Promise<any> => {
+  const response = await api.put<ApiResponse<any>>(`/ticket-units/${id}/status`, null, {
+    params: { status }
+  });
+  return response.data.data;
 };
 
-export const escalateToArchitect = async (ticketId: string, reason: string): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>(`/tickets/${ticketId}/escalate`, { reason });
-    return response.data.data;
-  } catch (error) {
-    await updateTicketStatus(parseInt(ticketId), 'ESCALATED');
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      status: 'ESCALATED',
-      escalationReason: reason
-    };
-  }
+export const checkMassGlitch = async (ticketId: number): Promise<boolean> => {
+  const response = await api.get<ApiResponse<boolean>>(`/ticket-units/mass-glitch-check/${ticketId}`);
+  return response.data.data;
 };
 
-export const architectDecision = async (ticketId: string, decision: "IGNORE" | "ALLOCATE_RESOURCES" | "DELETE_SECTOR", comment?: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/tickets/${ticketId}/architect-decision`, {
-      decision,
-      comment
-    });
-    return response.data.data;
-  } catch (error) {
-    const newStatus = decision === 'IGNORE' ? 'UNDER_REVIEW' : 
-                     decision === 'ALLOCATE_RESOURCES' ? 'IN_PROGRESS' : 'DONE';
-    await updateTicketStatus(parseInt(ticketId), newStatus);
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      status: newStatus,
-      architectDecision: decision,
-      architectComment: comment
-    };
-  }
+// ========== CHOSEN ONE ==========
+export const getCurrentChosenOne = async (): Promise<ChosenOne> => {
+  const response = await api.get<ApiResponse<ChosenOne>>('/chosen-ones/current');
+  return response.data.data;
 };
 
-export const mechanicFix = async (ticketId: string, patchNote: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/tickets/${ticketId}/fix`, { patchNote });
-    return response.data.data;
-  } catch (error) {
-    await updateTicketStatus(parseInt(ticketId), 'FIXED');
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      status: 'FIXED',
-      patchNote
-    };
-  }
+export const liftRestrictions = async (id: number): Promise<ChosenOne> => {
+  const response = await api.put<ApiResponse<ChosenOne>>(`/chosen-ones/${id}/lift-restrictions`);
+  return response.data.data;
 };
 
-export const agentComplete = async (ticketId: string, report: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/tickets/${ticketId}/complete`, { report });
-    return response.data.data;
-  } catch (error) {
-    await updateTicketStatus(parseInt(ticketId), 'DONE');
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      status: 'DONE',
-      completionReport: report
-    };
-  }
+export const conductFinalInterview = async (id: number, decision: string): Promise<string> => {
+  const response = await api.post<ApiResponse<string>>(`/chosen-ones/${id}/final-interview`, null, {
+    params: { decision }
+  });
+  return response.data.data;
 };
 
-export const monitorClose = async (ticketId: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/tickets/${ticketId}/close`);
-    return response.data.data;
-  } catch (error) {
-    await updateTicketStatus(parseInt(ticketId), 'CLOSED');
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      status: 'CLOSED'
-    };
-  }
+export const getChosenOnesByIteration = async (iterationId: number): Promise<ChosenOne[]> => {
+  const response = await api.get<ApiResponse<ChosenOne[]>>(`/chosen-ones/iteration/${iterationId}`);
+  return response.data.data;
 };
 
-export const agentRequestReinforcement = async (ticketId: string): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>(`/tickets/${ticketId}/reinforcement`);
-    return response.data.data;
-  } catch (error) {
-    const ticket = await getTicket(ticketId);
-    return {
-      ...ticket,
-      reinforcementRequested: true,
-      status: 'IN_PROGRESS'
-    };
-  }
+// ========== MATRIX ITERATIONS ==========
+export const getAllMatrixIterations = async (): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>('/matrix-iterations');
+  return response.data.data;
 };
 
-export const listCandidates = async (): Promise<any[]> => {
-  try {
-    const response = await api.get<ApiResponse<any[]>>('/candidates/uc');
-    return response.data.data;
-  } catch (error) {
-    const units = await getCandidateUnits();
-    return units.map(unit => ({
-      id: unit.id.toString(),
-      name: `Subject #${unit.id}`,
-      dissentIndex: unit.disagreementIndex,
-      status: unit.status,
-      dossier: unit.dossier
-    }));
-  }
+export const getCurrentIteration = async (): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>('/matrix-iterations/current');
+  return response.data.data;
 };
 
-export const oracleForecast = async (candidateId: string): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>(`/oracle/forecast/${candidateId}`);
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: `forecast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      candidateId,
-      options: [
-        { action: "Изоляция в метро", probability: 0.60 },
-        { action: "Синяя таблетка", probability: 0.30 },
-        { action: "Ликвидация", probability: 0.10 }
-      ],
-      note: "Прогноз на основе текущих аномалий и паттернов поведения.",
-      createdAt: new Date().toISOString()
-    };
-  }
+export const createMatrixIteration = async (num: number, description: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/matrix-iterations', null, {
+    params: { num, description }
+  });
+  return response.data.data;
 };
 
-export const agentOfferBluePill = async (candidateId: string): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>(`/candidates/${candidateId}/blue-pill`);
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: candidateId,
-      status: 'Neutralized',
-      action: 'blue-pill',
-      timestamp: new Date().toISOString()
-    };
-  }
+// ========== ROLE PERMISSIONS ==========
+export const getPermissionsByRole = async (role: string): Promise<string[]> => {
+  const response = await api.get<ApiResponse<string[]>>(`/role-permissions/role/${role}`);
+  return response.data.data;
 };
 
-export const sentinelStrikeRequest = async (candidateId: string, coords?: string): Promise<void> => {
-  try {
-    await api.post<ApiResponse<void>>(`/sentinel/strike`, {
-      candidateId,
-      coords
-    });
-  } catch (error) {
-    console.log(`Sentinel strike requested for candidate ${candidateId} at ${coords || 'unknown location'}`);
-  }
+export const grantPermission = async (role: string, permission: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/role-permissions/grant', null, {
+    params: { role, permission }
+  });
+  return response.data.data;
 };
 
-export const markAwakened = async (candidateId: string): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>(`/candidates/${candidateId}/awakened`);
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: candidateId,
-      status: 'Awakened',
-      timestamp: new Date().toISOString()
-    };
-  }
+export const revokePermission = async (role: string, permission: string): Promise<void> => {
+  await api.delete<ApiResponse<void>>('/role-permissions/revoke', {
+    params: { role, permission }
+  });
 };
 
-export const startAudit = async (): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>('/audit/start');
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: 'audit-1',
-      status: 'RUNNING',
-      startedAt: new Date().toISOString()
-    };
-  }
+export const checkPermission = async (role: string, permission: string): Promise<boolean> => {
+  const response = await api.get<ApiResponse<boolean>>('/role-permissions/check', {
+    params: { role, permission }
+  });
+  return response.data.data;
 };
 
-export const completeAudit = async (): Promise<any> => {
-  try {
-    const response = await api.put<ApiResponse<any>>('/audit/complete');
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: 'audit-1',
-      status: 'COMPLETED',
-      completedAt: new Date().toISOString()
-    };
-  }
+// ========== SECTORS ==========
+export const getAllSectors = async (): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>('/sectors');
+  return response.data.data;
 };
 
-export const listTheOneCandidates = async (): Promise<any[]> => {
-  try {
-    const response = await api.get<ApiResponse<any[]>>('/the-one/candidates');
-    return response.data.data;
-  } catch (error) {
-    return [
-      { id: "neo", name: "Thomas A. Anderson", probabilityOfSuccess: 0.74, dossier: "Аномалии 6-го порядка." },
-      { id: "trinity", name: "Trinity", probabilityOfSuccess: 0.33, dossier: "Сильная связь с Избранным." },
-      { id: "morpheus", name: "Morpheus", probabilityOfSuccess: 0.27, dossier: "Лидер сопротивления." }
-    ];
-  }
+export const getSectorById = async (id: number): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>(`/sectors/${id}`);
+  return response.data.data;
 };
 
-export const chooseTheOne = async (idChosen: string): Promise<any> => {
-  try {
-    const response = await api.post<ApiResponse<any>>(`/the-one/choose/${idChosen}`);
-    return response.data.data;
-  } catch (error) {
-    return {
-      id: idChosen,
-      chosen: true,
-      timestamp: new Date().toISOString(),
-      message: `Избранный ${idChosen} выбран для перезагрузки системы.`
-    };
-  }
+export const getSectorByCode = async (code: string): Promise<any> => {
+  const response = await api.get<ApiResponse<any>>(`/sectors/code/${code}`);
+  return response.data.data;
 };
 
-// Kernel functions
-export const kernelDetectGlitch = async (data: {
-  title: string;
-  description: string;
-  sector?: string;
-  massImpact?: boolean;
-}): Promise<void> => {
-  try {
-    await api.post<ApiResponse<void>>('/kernel/glitch', {
-      ...data,
-      kind: 'GLITCH',
-      severity: data.massImpact ? 3 : 1
-    });
-  } catch (error) {
-    console.log('Kernel detecting glitch:', data);
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
+export const createSector = async (code: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/sectors', null, {
+    params: { code }
+  });
+  return response.data.data;
 };
 
-export const kernelDetectCandidate = async (name: string, dissentIndex: number): Promise<void> => {
-  try {
-    await api.post<ApiResponse<void>>('/kernel/candidate', {
-      name,
-      dissentIndex
-    });
-  } catch (error) {
-    console.log('Kernel detecting candidate:', name, dissentIndex);
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
+// ========== MESSAGES ==========
+export const sendMessage = async (fromUserId: number, toUserId: number, text: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/messages', {
+    fromUserId,
+    toUserId,
+    text
+  });
+  return response.data.data;
 };
 
-// Dashboard summary
-export const getDashboardSummary = async (): Promise<{
-  closedToday: number;
-  openIncidents: number;
-  candidates: number;
-  orphanPrograms: number;
-}> => {
-  try {
-    const response = await api.get<ApiResponse<{
-      closedToday: number;
-      openIncidents: number;
-      candidates: number;
-      orphanPrograms: number;
-    }>>('/dashboard/summary');
-    return response.data.data;
-  } catch (error) {
-    return {
-      closedToday: 24,
-      openIncidents: 156,
-      candidates: 42,
-      orphanPrograms: 8
-    };
-  }
+export const getMessagesForUser = async (userId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/messages/user/${userId}`);
+  return response.data.data;
+};
+
+export const getSentMessages = async (userId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/messages/sent/${userId}`);
+  return response.data.data;
+};
+
+// ========== MECHANIC PERMISSIONS ==========
+export const createMechanicPermission = async (userId: number, sectorId: number, permissionStart: string, permissionEnd: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>('/mechanic-permissions', {
+    userId,
+    sectorId,
+    permissionStart,
+    permissionEnd
+  });
+  return response.data.data;
+};
+
+export const getMechanicPermissionsByUser = async (userId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/mechanic-permissions/user/${userId}`);
+  return response.data.data;
+};
+
+export const getMechanicPermissionsBySector = async (sectorId: number): Promise<any[]> => {
+  const response = await api.get<ApiResponse<any[]>>(`/mechanic-permissions/sector/${sectorId}`);
+  return response.data.data;
+};
+
+export const revokeMechanicPermission = async (id: number): Promise<void> => {
+  await api.delete<ApiResponse<void>>(`/mechanic-permissions/${id}`);
+};
+
+// ========== CANDIDATES ==========
+export const detectCandidates = async (): Promise<void> => {
+  await api.post<ApiResponse<void>>('/candidates/detect');
+};
+
+export const requestOraclePredictionForCandidate = async (unitId: number, requestedById: number): Promise<void> => {
+  await api.post<ApiResponse<void>>(`/candidates/${unitId}/request-oracle`, null, {
+    params: { requestedById }
+  });
 };
 
 export default api;

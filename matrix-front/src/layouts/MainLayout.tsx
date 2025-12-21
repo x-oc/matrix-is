@@ -1,16 +1,10 @@
-// MainLayout.tsx
 import {
     AppBar,
     Toolbar,
     Typography,
     Box,
-    Drawer,
-    List,
-    ListItemButton,
-    ListItemText,
     Button,
     IconButton,
-    Fade,
     Stack
 } from "@mui/material";
 import { ExitToApp as LogoutIcon } from "@mui/icons-material";
@@ -29,13 +23,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     useEffect(() => {
         if (!user) return;
 
-        // Проверяем доступность текущего пути
         const availableRoutes = appRoutes.filter(r => r.roles.includes(user.role));
         const isCurrentPathAvailable = availableRoutes.some(route =>
             location.pathname === route.path || location.pathname === '/'
         );
 
-        // Если путь недоступен и есть доступные маршруты - редирект
         if (!isCurrentPathAvailable && availableRoutes.length > 0) {
             navigate(availableRoutes[0].path, { replace: true });
         }
@@ -49,7 +41,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     return (
         <Box sx={{ display: "flex", minHeight: '100vh', flexDirection: 'column' }}>
-            {/* Matrix Background Effect */}
             <MatrixBackground />
 
             <AppBar
@@ -63,7 +54,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 }}
             >
                 <Toolbar sx={{ gap: 2, minHeight: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 1, pb: 0 }}>
-                    {/* Top row: Logo, User, Role, Logout */}
                     <Stack direction="row" sx={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
                         <Typography
                             variant="h6"
@@ -102,7 +92,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                         </Stack>
                     </Stack>
 
-                    {/* Bottom row: Navigation tabs */}
                     <Stack direction="row" sx={{ width: '100%', gap: 0.5, alignItems: 'center', pb: 1, overflowX: 'auto' }}>
                         {visibleMenu.map(m => (
                             <Button
