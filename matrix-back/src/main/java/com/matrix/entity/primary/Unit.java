@@ -21,7 +21,7 @@ public class Unit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "disagreement_index", nullable = false, precision = 3, scale = 1)
+    @Column(name = "disagreement_index", nullable = false)
     private Double disagreementIndex;
 
     @Enumerated(EnumType.STRING)

@@ -1,0 +1,9 @@
+CREATE DATABASE matrix_db;
+
+CREATE USER matrix_user WITH PASSWORD 'matrix_password';
+ALTER DATABASE matrix_db OWNER TO matrix_user;
+
+GRANT ALL PRIVILEGES ON DATABASE matrix_db TO matrix_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO matrix_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO matrix_user;
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO matrix_user;

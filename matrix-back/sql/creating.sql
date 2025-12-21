@@ -103,18 +103,18 @@ CREATE TYPE audit_type_enum AS ENUM (
 -- 1.1. Основные справочники
 
 CREATE TABLE sectors (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     code TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE matrix_iterations (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     num INTEGER NOT NULL,
     description TEXT
 );
 
 CREATE TABLE real_locations (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     latitude DOUBLE PRECISION NOT NULL,
     longitude DOUBLE PRECISION NOT NULL,
     z DOUBLE PRECISION
@@ -122,7 +122,7 @@ CREATE TABLE real_locations (
 
 -- 1.2. Основные сущности
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     role role_enum NOT NULL,
@@ -131,12 +131,12 @@ CREATE TABLE users (
 );
 
 CREATE TABLE units (
-    id SERIAL PRIMARY KEY,
-    disagreement_index NUMERIC(3,1) NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    disagreement_index DOUBLE PRECISION NOT NULL,
     status unit_status_enum NOT NULL,
     dossier TEXT,
     status_update_at TIMESTAMP,
-    real_location_id INTEGER REFERENCES real_locations(id)
+    real_location_id BIGINT REFERENCES real_locations(id)
 );
 
 -- 1.3. Связующие таблицы
@@ -147,24 +147,24 @@ CREATE TABLE role_permissions (
 );
 
 CREATE TABLE mechanic_permissions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    sector_id INTEGER NOT NULL REFERENCES sectors(id),
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    sector_id BIGINT NOT NULL REFERENCES sectors(id),
     permission_start TIMESTAMP NOT NULL,
     permission_end TIMESTAMP NOT NULL
 );
 
 CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
-    from_user_id INTEGER NOT NULL REFERENCES users(id),
-    to_user_id INTEGER NOT NULL REFERENCES users(id),
+    id BIGSERIAL PRIMARY KEY,
+    from_user_id BIGINT NOT NULL REFERENCES users(id),
+    to_user_id BIGINT NOT NULL REFERENCES users(id),
     text TEXT NOT NULL,
     sent_at TIMESTAMP NOT NULL
 );
 
 -- 1.4. Бизнес-сущности
 CREATE TABLE reports (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     period_start TIMESTAMP NOT NULL,
     period_end TIMESTAMP NOT NULL,
     generated_data TEXT NOT NULL,
@@ -172,14 +172,14 @@ CREATE TABLE reports (
 );
 
 CREATE TABLE tickets (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
     threat_level INTEGER NOT NULL,
     importance_level ticket_importance_enum,
     assigned_to_role role_enum NOT NULL,
     anomaly_type anomaly_type_enum NOT NULL,
-    report_id INTEGER REFERENCES reports(id),
+    report_id BIGINT REFERENCES reports(id),
     matrix_coordinates TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
@@ -187,74 +187,74 @@ CREATE TABLE tickets (
 );
 
 CREATE TABLE system_audits (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     audit_type audit_type_enum NOT NULL,
     stability_score INTEGER NOT NULL,
     point_of_no_return BOOLEAN,
-    initiated_by INTEGER NOT NULL REFERENCES users(id),
+    initiated_by BIGINT NOT NULL REFERENCES users(id),
     audit_data TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     status audit_status_enum NOT NULL
 );
 
 CREATE TABLE oracle_requests (
-    id SERIAL PRIMARY KEY,
-    matrix_iteration_id INTEGER NOT NULL REFERENCES matrix_iterations(id),
-    unit_id INTEGER NOT NULL REFERENCES units(id),
+    id BIGSERIAL PRIMARY KEY,
+    matrix_iteration_id BIGINT NOT NULL REFERENCES matrix_iterations(id),
+    unit_id BIGINT NOT NULL REFERENCES units(id),
     status oracle_request_status_enum NOT NULL,
-    requested_by INTEGER NOT NULL REFERENCES users(id),
+    requested_by BIGINT NOT NULL REFERENCES users(id),
     processed_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE forecasts (
-    id SERIAL PRIMARY KEY,
-    oracle_request_id INTEGER NOT NULL REFERENCES oracle_requests(id),
+    id BIGSERIAL PRIMARY KEY,
+    oracle_request_id BIGINT NOT NULL REFERENCES oracle_requests(id),
     forecast TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE chosen_ones (
-    id SERIAL PRIMARY KEY,
-    unit_id INTEGER NOT NULL REFERENCES units(id),
+    id BIGSERIAL PRIMARY KEY,
+    unit_id BIGINT NOT NULL REFERENCES units(id),
     restrictions_lifted BOOLEAN,
     final_decision TEXT,
-    selected_by INTEGER NOT NULL REFERENCES users(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    matrix_iteration_id INTEGER NOT NULL REFERENCES matrix_iterations(id),
+    selected_by BIGINT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    matrix_iteration_id BIGINT NOT NULL REFERENCES matrix_iterations(id),
     selected_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE sentinel_tasks (
-    id SERIAL PRIMARY KEY,
-    created_by INTEGER NOT NULL REFERENCES users(id),
+    id BIGSERIAL PRIMARY KEY,
+    created_by BIGINT NOT NULL REFERENCES users(id),
     status sentinel_task_status_enum NOT NULL,
     created_at TIMESTAMP NOT NULL,
     sentinel_count INTEGER NOT NULL,
-    location_id INTEGER NOT NULL REFERENCES real_locations(id),
+    location_id BIGINT NOT NULL REFERENCES real_locations(id),
     description TEXT
 );
 
 -- 1.5. Таблицы связей
 CREATE TABLE users_tickets (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    ticket_id BIGINT NOT NULL REFERENCES tickets(id),
     assigned_at TIMESTAMP NOT NULL,
     processed_at TIMESTAMP
 );
 
 CREATE TABLE tickets_units (
-    id SERIAL PRIMARY KEY,
-    unit_id INTEGER NOT NULL REFERENCES units(id),
-    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    id BIGSERIAL PRIMARY KEY,
+    unit_id BIGINT NOT NULL REFERENCES units(id),
+    ticket_id BIGINT NOT NULL REFERENCES tickets(id),
     status ticket_unit_status_enum NOT NULL
 );
 
 CREATE TABLE tickets_comments (
-    id SERIAL PRIMARY KEY,
-    created_by INTEGER NOT NULL REFERENCES users(id),
-    ticket_id INTEGER NOT NULL REFERENCES tickets(id),
+    id BIGSERIAL PRIMARY KEY,
+    created_by BIGINT NOT NULL REFERENCES users(id),
+    ticket_id BIGINT NOT NULL REFERENCES tickets(id),
     comment TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL
 );
