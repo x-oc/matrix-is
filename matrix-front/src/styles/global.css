@@ -1,0 +1,119 @@
+/* Матричный фон */
+.matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+            radial-gradient(circle at 20% 50%, rgba(0, 255, 65, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(0, 229, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.05) 0%, transparent 50%);
+    z-index: -1;
+}
+
+/* Падающие цифры (Matrix дождь) */
+.matrix-bg::before {
+    content: "01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00 01 10 11 00";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: rgba(0, 255, 65, 0.1);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    pointer-events: none;
+    z-index: -1;
+    animation: matrixRain 15s linear infinite;
+    overflow: hidden;
+}
+
+@keyframes matrixRain {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Анимированный цифровой дождь */
+.digital-rain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(transparent 90%, rgba(0, 255, 65, 0.1) 100%);
+    background-size: 100% 4px;
+    animation: rain 20s linear infinite;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+@keyframes rain {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100%; }
+}
+
+/* Эффект сканирования для карточек */
+.scan-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.scan-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(transparent, rgba(0, 255, 65, 0.2), transparent);
+    animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(400%); }
+}
+
+/* Анимация скроллинга матрицы */
+@keyframes matrixScroll {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 0 100%;
+    }
+}
+
+/* Анимация сканирования линий */
+@keyframes scanLine {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
