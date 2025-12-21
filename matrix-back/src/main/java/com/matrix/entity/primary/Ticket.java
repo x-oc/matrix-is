@@ -9,9 +9,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -37,18 +35,15 @@ public class Ticket {
     private Integer threatLevel;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "importance_level")
+    @Column(name = "importance_level", columnDefinition = "ticket_importance_enum")
     private TicketImportanceEnum importanceLevel;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "assigned_to_role", nullable = false)
+    @Column(name = "assigned_to_role", nullable = false, columnDefinition = "role_enum")
     private RoleEnum assignedToRole;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "anomaly_type", nullable = false)
+    @Column(name = "anomaly_type", nullable = false, columnDefinition = "anomaly_type_enum")
     private AnomalyTypeEnum anomalyType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -67,8 +62,7 @@ public class Ticket {
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "ticket_status_enum")
     private TicketStatusEnum status;
 
     @JsonIgnore
