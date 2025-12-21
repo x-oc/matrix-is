@@ -5,23 +5,34 @@ import {
     Box,
     Button,
     IconButton,
-    Stack
+    Stack,
+    CircularProgress
 } from "@mui/material";
 import { ExitToApp as LogoutIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import RoleBadge from "@components/RoleBadge";
 import { useAuth } from "@auth/useAuth";
 import { appRoutes } from "../routes";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MatrixBackground } from "@components/MatrixBackground";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout, isAuthenticated } = useAuth();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
+        // Даем время на проверку аутентификации
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!user || !isAuthenticated) return;
 
         const availableRoutes = appRoutes.filter(r => r.roles.includes(user.role));
         const isCurrentPathAvailable = availableRoutes.some(route =>
@@ -31,10 +42,21 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         if (!isCurrentPathAvailable && availableRoutes.length > 0) {
             navigate(availableRoutes[0].path, { replace: true });
         }
-    }, [user, location.pathname, navigate]);
+    }, [user, location.pathname, navigate, isAuthenticated]);
 
-    if (!user) {
-        return null;
+    // Показываем загрузку, пока проверяется аутентификация
+    if (loading || !isAuthenticated || !user) {
+        return (
+            <Box sx={{ 
+                display: "flex", 
+                minHeight: '100vh', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)"
+            }}>
+                <CircularProgress sx={{ color: '#00ff41' }} />
+            </Box>
+        );
     }
 
     const visibleMenu = appRoutes.filter(r => r.roles.includes(user.role));
@@ -53,14 +75,28 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     zIndex: 1200
                 }}
             >
-                <Toolbar sx={{ gap: 2, minHeight: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 1, pb: 0 }}>
-                    <Stack direction="row" sx={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                <Toolbar sx={{ 
+                    gap: 2, 
+                    minHeight: 64, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'flex-start', 
+                    pt: 1, 
+                    pb: 0 
+                }}>
+                    <Stack direction="row" sx={{ 
+                        width: '100%', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        gap: 2 
+                    }}>
                         <Typography
                             variant="h6"
                             sx={{
                                 fontFamily: "'Orbitron', sans-serif",
                                 fontWeight: 700,
-                                letterSpacing: '0.1em'
+                                letterSpacing: '0.1em',
+                                color: '#00ff41'
                             }}
                         >
                             MATRIX CONTROL
@@ -92,7 +128,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                         </Stack>
                     </Stack>
 
-                    <Stack direction="row" sx={{ width: '100%', gap: 0.5, alignItems: 'center', pb: 1, overflowX: 'auto' }}>
+                    <Stack direction="row" sx={{ 
+                        width: '100%', 
+                        gap: 0.5, 
+                        alignItems: 'center', 
+                        pb: 1, 
+                        overflowX: 'auto' 
+                    }}>
                         {visibleMenu.map(m => (
                             <Button
                                 key={m.path}

@@ -5,36 +5,20 @@ import {
   Typography,
   TextField,
   Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Alert,
   Card,
   CardContent,
   Container,
 } from "@mui/material";
-import { Role } from "../types/types";
 import { login } from "../api/client";
 import { useAuth } from "./useAuth";
-
-const roleDescriptions: Record<Role, string> = {
-  ARCHITECT: "Архитектор - управляет системой и принимает критические решения",
-  SYSTEM_KERNEL: "Системное Ядро - создает глитчи и обнаруживает кандидатов",
-  MONITOR: "Смотритель - классифицирует и эскалирует тикеты",
-  AGENT_SMITH: "Агент Смит - выполняет задания и анализирует кандидатов",
-  ORACLE: "Оракул - предсказывает судьбы кандидатов",
-  KEYMAKER: "Хранитель - работает с точками доступа",
-  SENTINEL_CONTROLLER: "Контроллер Сентинелей - управляет защитными системами",
-  MECHANIC: "Механик - исправляет технические проблемы",
-};
 
 export default function LoginPage() {
   const { login: authLogin } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("MONITOR");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,11 +29,20 @@ export default function LoginPage() {
     }
 
     try {
+      setIsLoading(true);
       setError("");
       const authResponse = await login(username.trim(), password.trim());
-      authLogin(username.trim(), authResponse.role, authResponse.userId);
+      
+      // Логин через контекст с данными от сервера
+      authLogin(
+        authResponse.username, 
+        authResponse.role, 
+        authResponse.userId
+      );
     } catch (err: any) {
-      setError(err.response?.data?.message || "Ошибка авторизации");
+      setError(err.response?.data?.message || "Неверное имя пользователя или пароль");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -109,6 +102,7 @@ export default function LoginPage() {
               required
               autoComplete="username"
               autoFocus
+              disabled={isLoading}
             />
 
             <TextField
@@ -120,43 +114,15 @@ export default function LoginPage() {
               margin="normal"
               required
               autoComplete="current-password"
+              disabled={isLoading}
             />
-
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel>Роль</InputLabel>
-              <Select
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-                label="Роль"
-              >
-                {Object.entries(roleDescriptions).map(([roleKey]) => (
-                  <MenuItem key={roleKey} value={roleKey}>
-                    <Box>
-                      <Typography variant="body1" fontWeight="medium">
-                        {roleKey}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Card sx={{ mt: 3, bgcolor: "grey.50" }}>
-              <CardContent>
-                <Typography variant="subtitle2" gutterBottom>
-                  Выбранная роль: {role}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {roleDescriptions[role]}
-                </Typography>
-              </CardContent>
-            </Card>
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
+              disabled={isLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -167,7 +133,7 @@ export default function LoginPage() {
                 },
               }}
             >
-              Войти в систему
+              {isLoading ? "Вход..." : "Войти в систему"}
             </Button>
           </form>
 

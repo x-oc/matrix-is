@@ -58,12 +58,24 @@ api.interceptors.response.use(
 export const login = async (username: string, password: string): Promise<AuthResponse> => {
   const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', { username, password });
   const { data } = response.data;
+  
+  // Сохраняем токен авторизации
   localStorage.setItem('token', data.token);
   localStorage.setItem('userId', data.userId.toString());
   localStorage.setItem('username', data.username);
   localStorage.setItem('role', data.role);
+
+  
+  // Сохраняем время истечения токена
+  if (data.expiresAt) {
+    localStorage.setItem('tokenExpiresAt', data.expiresAt);
+  }
+  
   return data;
 };
+
+// Остальные функции остаются без изменений
+// ...
 
 export const refreshToken = async (token: string): Promise<AuthResponse> => {
   const response = await api.post<ApiResponse<AuthResponse>>('/auth/refresh', null, {
