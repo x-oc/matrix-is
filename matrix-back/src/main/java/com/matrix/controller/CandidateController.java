@@ -16,7 +16,7 @@ public class CandidateController extends BaseController {
 
     private final CandidateService candidateService;
 
-    @GetMapping("/detect")
+    @PostMapping("/detect")
     public ResponseEntity<ApiResponse<Void>> detectCandidates() {
         candidateService.detectCandidates();
         return success("Candidates detection started");

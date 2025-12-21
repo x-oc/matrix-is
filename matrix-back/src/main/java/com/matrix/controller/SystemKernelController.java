@@ -10,17 +10,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/system-kernel")
+@RequestMapping("/api/kernel")
 @RequiredArgsConstructor
 public class SystemKernelController extends BaseController {
 
     private final SystemKernelService systemKernelService;
 
-    @PostMapping("/glitch-ticket")
+    @PostMapping("/glitch")
     public ResponseEntity<ApiResponse<Ticket>> createGlitchTicket(
             @Valid @RequestBody CreateGlitchTicketRequest request) {
         Ticket ticket = systemKernelService.createGlitchTicket(request);
         return created("Glitch ticket created automatically", ticket);
+    }
+
+    @PostMapping("/candidate")
+    public ResponseEntity<ApiResponse<Void>> detectCandidate() {
+        systemKernelService.autoDetectAndCreateTickets();
+        return success("Candidate detection initiated");
     }
 
     @PostMapping("/escalate/{ticketId}")
