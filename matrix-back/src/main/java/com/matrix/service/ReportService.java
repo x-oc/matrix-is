@@ -1,5 +1,6 @@
 package com.matrix.service;
 
+import com.matrix.entity.enums.TicketStatusEnum;
 import com.matrix.entity.primary.Report;
 import com.matrix.repository.ReportRepository;
 import com.matrix.repository.TicketRepository;
@@ -24,12 +25,11 @@ public class ReportService {
     public Report generateDailyReport(LocalDateTime periodStart, LocalDateTime periodEnd) {
         log.info("Generating daily report for period: {} - {}", periodStart, periodEnd);
 
-        // Collect statistics
         Map<String, Object> reportData = new HashMap<>();
 
         long totalTickets = ticketRepository.findByPeriod(periodStart, periodEnd).size();
-        long closedTickets = ticketRepository.countByStatus("закрыт");
-        long pendingTickets = ticketRepository.countByStatus("на проверке");
+        long closedTickets = ticketRepository.countByStatus(TicketStatusEnum.CLOSED);
+        long pendingTickets = ticketRepository.countByStatus(TicketStatusEnum.UNDER_REVIEW);
 
         // Count by threat level
         Map<Integer, Long> threatLevelStats = new HashMap<>();
@@ -40,7 +40,6 @@ public class ReportService {
             threatLevelStats.put(i, count);
         }
 
-        // Build JSON data
         String jsonData = buildJsonReport(totalTickets, closedTickets, pendingTickets, threatLevelStats);
 
         Report report = new Report();
@@ -54,7 +53,6 @@ public class ReportService {
 
     private String buildJsonReport(long totalTickets, long closedTickets, long pendingTickets,
                                    Map<Integer, Long> threatLevelStats) {
-        // Simple JSON construction - in production use Jackson
         StringBuilder json = new StringBuilder();
         json.append("{");
         json.append("\"total_tickets\":").append(totalTickets).append(",");

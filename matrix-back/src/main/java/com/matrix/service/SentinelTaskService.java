@@ -1,5 +1,6 @@
 package com.matrix.service;
 
+import com.matrix.entity.enums.SentinelTaskStatusEnum;
 import com.matrix.entity.primary.SentinelTask;
 import com.matrix.entity.primary.User;
 import com.matrix.entity.auxiliary.RealLocation;
@@ -54,8 +55,8 @@ public class SentinelTaskService {
     }
 
     @Transactional
-    public SentinelTask createTask(Long createdById, String status, Integer sentinelCount,
-                                   Long locationId, String description) {
+    public SentinelTask createTask(Long createdById, SentinelTaskStatusEnum status,
+                                   Integer sentinelCount, Long locationId, String description) {
 
         User createdBy = userRepository.findById(createdById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -75,14 +76,14 @@ public class SentinelTaskService {
     }
 
     @Transactional
-    public SentinelTask updateTaskStatus(Long taskId, String status) {
+    public SentinelTask updateTaskStatus(Long taskId, SentinelTaskStatusEnum status) {
         SentinelTask task = findById(taskId);
-        task.setStatus(status);
+        task.setStatus(status); // Уже ENUM
         return sentinelTaskRepository.save(task);
     }
 
     @Transactional(readOnly = true)
-    public List<SentinelTask> getTasksByStatus(String status) {
+    public List<SentinelTask> getTasksByStatus(SentinelTaskStatusEnum status) {
         return sentinelTaskRepository.findByStatus(status);
     }
 
@@ -93,6 +94,6 @@ public class SentinelTaskService {
 
     @Transactional(readOnly = true)
     public List<SentinelTask> getActiveSentinelTasks() {
-        return sentinelTaskRepository.findByStatus("активна");
+        return sentinelTaskRepository.findByStatus(SentinelTaskStatusEnum.ACTIVE);
     }
 }

@@ -74,7 +74,7 @@ public class AuthService {
         response.setToken(token);
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
-        response.setRole(user.getRole().getName());
+        response.setRole(user.getRole().name());
         response.setExpiresAt(LocalDateTime.now().plusHours(24));
 
         return response;

@@ -1,9 +1,12 @@
 package com.matrix.entity.primary;
 
 import com.matrix.entity.auxiliary.RealLocation;
+import com.matrix.entity.enums.SentinelTaskStatusEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,10 +23,12 @@ public class SentinelTask {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "sentinel_task_status_enum")
+    private SentinelTaskStatusEnum status;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "sentinel_count", nullable = false)

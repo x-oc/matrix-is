@@ -1,6 +1,9 @@
 package com.matrix.service;
 
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.primary.User;
+import com.matrix.exception.BusinessException;
+import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +20,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserService extends BaseService<User, Long> implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -31,7 +34,7 @@ public class UserService extends BaseService<User, Long> implements UserDetailsS
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .authorities(user.getRole().getName())
+                .authorities(user.getRole().name())
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)
@@ -39,16 +42,27 @@ public class UserService extends BaseService<User, Long> implements UserDetailsS
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
     @Transactional
-    public User createUser(String username, String password, Long roleId) {
+    public User createUser(String username, String password, RoleEnum role) {
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new com.matrix.exception.BusinessException("Username already exists");
+            throw new BusinessException("Username already exists");
         }
 
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        // Role would be set by roleId
+        user.setRole(role);
         user.setCreatedAt(LocalDateTime.now());
         user.setIsActive(true);
 
@@ -63,8 +77,8 @@ public class UserService extends BaseService<User, Long> implements UserDetailsS
     }
 
     @Transactional(readOnly = true)
-    public List<User> getUsersByRole(String roleName) {
-        return userRepository.findByRoleName(roleName);
+    public List<User> getUsersByRole(RoleEnum role) {
+        return userRepository.findByRole(role);
     }
 
     @Transactional(readOnly = true)

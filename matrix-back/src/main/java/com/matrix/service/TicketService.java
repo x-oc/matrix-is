@@ -1,7 +1,7 @@
 package com.matrix.service;
+
 import com.matrix.dto.request.CreateTicketRequest;
-import com.matrix.entity.auxiliary.AnomalyType;
-import com.matrix.entity.auxiliary.Role;
+import com.matrix.entity.enums.*;
 import com.matrix.entity.linking.TicketComment;
 import com.matrix.entity.primary.Message;
 import com.matrix.entity.primary.Ticket;
@@ -23,11 +23,10 @@ import java.util.List;
 public class TicketService {
 
     private final TicketRepository ticketRepository;
-    private final RoleRepository roleRepository;
-    private final AnomalyTypeRepository anomalyTypeRepository;
     private final UserRepository userRepository;
     private final TicketUnitRepository ticketUnitRepository;
     private final MessageRepository messageRepository;
+    private final MessageService messageService;
     private final TicketCommentRepository commentRepository;
 
     @Transactional(readOnly = true)
@@ -39,39 +38,35 @@ public class TicketService {
     public Ticket createTicket(CreateTicketRequest request) {
         log.info("Creating new ticket: {}", request.getTitle());
 
-        Role watcherRole = roleRepository.findByName("Смотритель")
-                .orElseThrow(() -> new BusinessException("Watcher role not found"));
-
-        AnomalyType anomalyType = anomalyTypeRepository.findById(request.getAnomalyTypeId())
-                .orElseThrow(() -> new BusinessException("Anomaly type not found"));
-
         Ticket ticket = new Ticket();
         ticket.setTitle(request.getTitle());
         ticket.setDescription(request.getDescription());
         ticket.setThreatLevel(request.getThreatLevel());
-        ticket.setImportanceLevel("Низкий");
-        ticket.setAssignedToRole(watcherRole);
-        ticket.setAnomalyType(anomalyType);
+        ticket.setImportanceLevel(TicketImportanceEnum.LOW);
+        ticket.setAssignedToRole(RoleEnum.MONITOR);
+
+        try {
+            ticket.setAnomalyType(AnomalyTypeEnum.valueOf(request.getAnomalyType()));
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Invalid anomaly type: " + request.getAnomalyType());
+        }
+
         ticket.setMatrixCoordinates(request.getMatrixCoordinates());
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setUpdatedAt(LocalDateTime.now());
-        ticket.setStatus("новый");
+        ticket.setStatus(TicketStatusEnum.NEW);
 
         return ticketRepository.save(ticket);
     }
 
     @Transactional
-    public Ticket assignTicket(Long ticketId, String roleName) {
+    public Ticket assignTicket(Long ticketId, RoleEnum role) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new BusinessException("Role not found: " + roleName));
 
         ticket.setAssignedToRole(role);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        // Find system user for comment
         User systemUser = userRepository.findByUsername("system")
                 .orElseGet(() -> userRepository.findAll().stream()
                         .filter(User::getIsActive)
@@ -82,7 +77,7 @@ public class TicketService {
             TicketComment comment = new TicketComment();
             comment.setCreatedBy(systemUser);
             comment.setTicket(ticket);
-            comment.setComment("Тикет назначен на роль: " + roleName);
+            comment.setComment("Тикет назначен на роль: " + role);
             comment.setCreatedAt(LocalDateTime.now());
             commentRepository.save(comment);
         }
@@ -91,7 +86,7 @@ public class TicketService {
     }
 
     @Transactional
-    public void updateStatus(Long ticketId, String status) {
+    public void updateStatus(Long ticketId, TicketStatusEnum status) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
@@ -101,13 +96,13 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public List<Ticket> getTicketsByStatus(String status) {
+    public List<Ticket> getTicketsByStatus(TicketStatusEnum status) {
         return ticketRepository.findByStatus(status);
     }
 
     @Transactional(readOnly = true)
-    public List<Ticket> getTicketsByRoleAndStatus(Long roleId, String status) {
-        return ticketRepository.findByRoleAndStatus(roleId, status);
+    public List<Ticket> getTicketsByRoleAndStatus(RoleEnum role, TicketStatusEnum status) {
+        return ticketRepository.findByAssignedToRoleAndStatus(role, status);
     }
 
     @Transactional(readOnly = true)
@@ -123,27 +118,60 @@ public class TicketService {
         long affectedUnits = countAffectedUnits(ticketId);
 
         if (affectedUnits >= 100) {
-            ticket.setImportanceLevel("Высокий");
+            ticket.setImportanceLevel(TicketImportanceEnum.HIGH);
             ticket.setUpdatedAt(LocalDateTime.now());
             ticketRepository.save(ticket);
 
-            // Notify watcher
-            User watcher = userRepository.findByRoleName("Смотритель").stream()
-                    .filter(User::getIsActive)
-                    .findFirst()
-                    .orElse(null);
-
+            List<User> watchers = userRepository.findByRole(RoleEnum.MONITOR);
             User systemUser = userRepository.findByUsername("system")
                     .orElse(null);
 
-            if (watcher != null && systemUser != null) {
-                Message message = new Message();
-                message.setFromUser(systemUser);
-                message.setToUser(watcher);
-                message.setText("Обнаружен массовый глитч! Тикет #" + ticketId +
-                        " повышен до Высокого уровня важности. Затронуто юнитов: " + affectedUnits);
-                message.setSentAt(LocalDateTime.now());
-                messageRepository.save(message);
+            if (!watchers.isEmpty() && systemUser != null) {
+                for (User watcher : watchers) {
+                    if (watcher.getIsActive()) {
+                        Message message = new Message();
+                        message.setFromUser(systemUser);
+                        message.setToUser(watcher);
+                        message.setText("Обнаружен массовый глитч! Тикет #" + ticketId +
+                                " повышен до Высокого уровня важности. Затронуто юнитов: " + affectedUnits);
+                        message.setSentAt(LocalDateTime.now());
+                        messageRepository.save(message);
+                    }
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public void escalateMassGlitchAutomatically(Long ticketId) {
+        long affectedUnits = ticketUnitRepository.countByTicketId(ticketId);
+
+        if (affectedUnits >= 100) {
+            Ticket ticket = ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+            ticket.setImportanceLevel(TicketImportanceEnum.HIGH);
+            ticket.setStatus(TicketStatusEnum.ESCALATED);
+            ticket.setUpdatedAt(LocalDateTime.now());
+            ticketRepository.save(ticket);
+
+            notifyMonitorsAboutMassGlitch(ticketId, affectedUnits);
+        }
+    }
+
+    private void notifyMonitorsAboutMassGlitch(Long ticketId, long affectedUnits) {
+        List<User> monitors = userRepository.findByRole(RoleEnum.MONITOR);
+        User system = userRepository.findByUsername("system")
+                .orElseThrow(() -> new BusinessException("System user not found"));
+
+        for (User monitor : monitors) {
+            if (monitor.getIsActive()) {
+                messageService.sendMessage(
+                        system.getId(),
+                        monitor.getId(),
+                        "MASS GLITCH ALERT: Ticket #" + ticketId +
+                                " escalated to HIGH. Affected units: " + affectedUnits
+                );
             }
         }
     }

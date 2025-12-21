@@ -1,6 +1,7 @@
 package com.matrix.controller;
 
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.primary.User;
 import com.matrix.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,8 @@ public class UserController extends BaseController {
 
     @GetMapping("/role/{roleName}")
     public ResponseEntity<ApiResponse<List<User>>> getUsersByRole(@PathVariable String roleName) {
-        List<User> users = userService.getUsersByRole(roleName);
+        RoleEnum role = RoleEnum.valueOf(roleName.toUpperCase());
+        List<User> users = userService.getUsersByRole(role);
         return success(users);
     }
 

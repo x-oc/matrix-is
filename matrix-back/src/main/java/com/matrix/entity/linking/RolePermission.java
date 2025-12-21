@@ -1,25 +1,25 @@
 package com.matrix.entity.linking;
 
-import com.matrix.entity.auxiliary.Permission;
-import com.matrix.entity.auxiliary.Role;
+import com.matrix.entity.enums.PermissionEnum;
+import com.matrix.entity.enums.RoleEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "roles_permissions")
+@Table(name = "role_permissions")
 @IdClass(RolePermissionId.class)
 @Getter
 @Setter
 public class RolePermission {
 
     @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, columnDefinition = "role_enum")
+    private RoleEnum role;
 
     @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "permission_id", nullable = false)
-    private Permission permission;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permission", nullable = false, columnDefinition = "permission_enum")
+    private PermissionEnum permission;
 }

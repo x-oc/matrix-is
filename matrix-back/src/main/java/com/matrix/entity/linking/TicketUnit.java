@@ -1,5 +1,6 @@
 package com.matrix.entity.linking;
 
+import com.matrix.entity.enums.TicketUnitStatusEnum;
 import com.matrix.entity.primary.Ticket;
 import com.matrix.entity.primary.Unit;
 import jakarta.persistence.*;
@@ -24,6 +25,7 @@ public class TicketUnit {
     @JoinColumn(name = "ticket_id", nullable = false)
     private Ticket ticket;
 
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "ticket_unit_status_enum")
+    private TicketUnitStatusEnum status;
 }

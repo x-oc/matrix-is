@@ -2,6 +2,7 @@ package com.matrix.controller;
 
 import com.matrix.dto.request.CreateSentinelTaskRequest;
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.entity.enums.SentinelTaskStatusEnum;
 import com.matrix.entity.primary.SentinelTask;
 import com.matrix.service.SentinelTaskService;
 import jakarta.validation.Valid;
@@ -20,9 +21,11 @@ public class SentinelTaskController extends BaseController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<SentinelTask>> createTask(@Valid @RequestBody CreateSentinelTaskRequest request) {
+        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(request.getStatus().toUpperCase());
+
         SentinelTask task = sentinelTaskService.createTask(
                 request.getCreatedBy(),
-                request.getStatus(),
+                statusEnum,
                 request.getSentinelCount(),
                 request.getLocationId(),
                 request.getDescription()
@@ -38,7 +41,8 @@ public class SentinelTaskController extends BaseController {
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<SentinelTask>>> getTasksByStatus(@PathVariable String status) {
-        List<SentinelTask> tasks = sentinelTaskService.getTasksByStatus(status);
+        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(status.toUpperCase());
+        List<SentinelTask> tasks = sentinelTaskService.getTasksByStatus(statusEnum);
         return success(tasks);
     }
 
@@ -52,7 +56,8 @@ public class SentinelTaskController extends BaseController {
     public ResponseEntity<ApiResponse<SentinelTask>> updateTaskStatus(
             @PathVariable Long id,
             @RequestParam String status) {
-        SentinelTask task = sentinelTaskService.updateTaskStatus(id, status);
+        SentinelTaskStatusEnum statusEnum = SentinelTaskStatusEnum.valueOf(status.toUpperCase());
+        SentinelTask task = sentinelTaskService.updateTaskStatus(id, statusEnum);
         return success("Task status updated", task);
     }
 }

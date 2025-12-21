@@ -2,6 +2,7 @@ package com.matrix.service;
 
 import com.matrix.dto.request.RequestOraclePredictionRequest;
 import com.matrix.entity.auxiliary.MatrixIteration;
+import com.matrix.entity.enums.OracleRequestStatusEnum;
 import com.matrix.entity.primary.*;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
@@ -40,7 +41,7 @@ public class OracleService {
         OracleRequest oracleRequest = new OracleRequest();
         oracleRequest.setMatrixIteration(currentIteration);
         oracleRequest.setUnit(unit);
-        oracleRequest.setStatus("pending");
+        oracleRequest.setStatus(OracleRequestStatusEnum.PENDING);
         oracleRequest.setRequestedBy(requester);
         oracleRequest.setCreatedAt(LocalDateTime.now());
 
@@ -64,7 +65,7 @@ public class OracleService {
         forecastRepository.save(forecast);
 
         // Update request status
-        request.setStatus("completed");
+        request.setStatus(OracleRequestStatusEnum.COMPLETED);
         request.setProcessedAt(LocalDateTime.now());
         oracleRequestRepository.save(request);
 
@@ -81,7 +82,7 @@ public class OracleService {
 
     @Transactional(readOnly = true)
     public List<OracleRequest> getPendingRequests() {
-        return oracleRequestRepository.findByStatus("pending");
+        return oracleRequestRepository.findByStatus(OracleRequestStatusEnum.PENDING);
     }
 
     @Transactional(readOnly = true)

@@ -1,11 +1,13 @@
 package com.matrix.entity.primary;
 
-import com.matrix.entity.auxiliary.Role;
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.linking.MechanicPermission;
 import com.matrix.entity.linking.UserTicket;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,11 +28,12 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, columnDefinition = "role_enum")
+    private RoleEnum role;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "is_active", nullable = false)

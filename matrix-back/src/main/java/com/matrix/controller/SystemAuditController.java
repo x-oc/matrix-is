@@ -1,6 +1,8 @@
 package com.matrix.controller;
 
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.entity.enums.AuditStatusEnum;
+import com.matrix.entity.enums.AuditTypeEnum;
 import com.matrix.entity.primary.SystemAudit;
 import com.matrix.service.SystemAuditService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,8 @@ public class SystemAuditController extends BaseController {
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<SystemAudit>>> getAuditsByStatus(@PathVariable String status) {
-        List<SystemAudit> audits = auditService.getAuditsByStatus(status);
+        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());  // Преобразуем строку в ENUM
+        List<SystemAudit> audits = auditService.getAuditsByStatus(statusEnum);
         return success(audits);
     }
 
@@ -36,16 +39,19 @@ public class SystemAuditController extends BaseController {
 
     @PostMapping("/initiate")
     public ResponseEntity<ApiResponse<SystemAudit>> initiateAudit(
-            @RequestParam Long auditTypeId,
+            @RequestParam String auditType,
             @RequestParam Integer stabilityScore,
             @RequestParam Boolean pointOfNoReturn,
             @RequestParam Long initiatedById,
             @RequestParam String auditData,
             @RequestParam String status) {
 
+        AuditTypeEnum auditTypeEnum = AuditTypeEnum.valueOf(auditType.toUpperCase());
+        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());
+
         SystemAudit audit = auditService.initiateAudit(
-                auditTypeId, stabilityScore, pointOfNoReturn,
-                initiatedById, auditData, status
+                auditTypeEnum, stabilityScore, pointOfNoReturn,
+                initiatedById, auditData, statusEnum
         );
         return created("Audit initiated", audit);
     }
@@ -56,7 +62,9 @@ public class SystemAuditController extends BaseController {
             @RequestParam String status,
             @RequestParam(required = false) Integer stabilityScore) {
 
-        auditService.updateAuditStatus(id, status, stabilityScore);
+        AuditStatusEnum statusEnum = AuditStatusEnum.valueOf(status.toUpperCase());
+
+        auditService.updateAuditStatus(id, statusEnum, stabilityScore);
         return success("Audit status updated");
     }
 }

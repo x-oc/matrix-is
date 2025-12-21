@@ -1,9 +1,12 @@
 package com.matrix.entity.primary;
 
-import com.matrix.entity.auxiliary.AuditType;
+import com.matrix.entity.enums.AuditStatusEnum;
+import com.matrix.entity.enums.AuditTypeEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,9 +19,9 @@ public class SystemAudit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "audit_type_id", nullable = false)
-    private AuditType auditType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audit_type", nullable = false, columnDefinition = "audit_type_enum")
+    private AuditTypeEnum auditType;
 
     @Column(name = "stability_score", nullable = false)
     private Integer stabilityScore;
@@ -33,9 +36,11 @@ public class SystemAudit {
     @Column(name = "audit_data", nullable = false, columnDefinition = "TEXT")
     private String auditData;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "audit_status_enum")
+    private AuditStatusEnum status;
 }

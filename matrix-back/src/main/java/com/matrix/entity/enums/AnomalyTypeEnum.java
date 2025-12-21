@@ -1,0 +1,12 @@
+package com.matrix.entity.enums;
+
+public enum AnomalyTypeEnum {
+    PHYSICS_GLITCH,
+    VISUAL_ARTIFACT,
+    TIME_PARADOX,
+    NPC_MEMORY_ANOMALY,
+    SIMULATION_LOGIC_FAILURE,
+    UNAUTHORIZED_ACCESS,
+    UNIT_AWAKENING,
+    MASS_GLITCH
+}

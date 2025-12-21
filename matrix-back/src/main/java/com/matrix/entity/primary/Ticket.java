@@ -1,13 +1,15 @@
 package com.matrix.entity.primary;
 
-import com.matrix.entity.auxiliary.AnomalyType;
-import com.matrix.entity.auxiliary.Role;
+import com.matrix.entity.enums.*;
 import com.matrix.entity.linking.TicketComment;
 import com.matrix.entity.linking.TicketUnit;
 import com.matrix.entity.linking.UserTicket;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,16 +33,17 @@ public class Ticket {
     @Column(name = "threat_level", nullable = false)
     private Integer threatLevel;
 
-    @Column(name = "importance_level")
-    private String importanceLevel;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "importance_level", columnDefinition = "ticket_importance_enum")
+    private TicketImportanceEnum importanceLevel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_role_id", nullable = false)
-    private Role assignedToRole;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assigned_to_role", nullable = false, columnDefinition = "role_enum")
+    private RoleEnum assignedToRole;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "anomaly_type_id", nullable = false)
-    private AnomalyType anomalyType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "anomaly_type", nullable = false, columnDefinition = "anomaly_type_enum")
+    private AnomalyTypeEnum anomalyType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id")
@@ -49,14 +52,17 @@ public class Ticket {
     @Column(name = "matrix_coordinates", nullable = false)
     private String matrixCoordinates;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "ticket_status_enum")
+    private TicketStatusEnum status;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserTicket> assignedUsers = new HashSet<>();

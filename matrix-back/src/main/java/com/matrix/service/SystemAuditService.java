@@ -1,5 +1,8 @@
 package com.matrix.service;
 
+import com.matrix.entity.enums.AuditStatusEnum;
+import com.matrix.entity.enums.AuditTypeEnum;
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.primary.SystemAudit;
 import com.matrix.entity.primary.User;
 import com.matrix.exception.ResourceNotFoundException;
@@ -16,41 +19,37 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SystemAuditService extends BaseService<SystemAudit, Long> {
+public class SystemAuditService {
 
     private final SystemAuditRepository systemAuditRepository;
     private final UserRepository userRepository;
     private final MessageService messageService;
 
-    @Override
     @Transactional(readOnly = true)
     public List<SystemAudit> findAll() {
         return systemAuditRepository.findAll();
     }
 
-    @Override
     @Transactional(readOnly = true)
     public SystemAudit findById(Long id) {
         return systemAuditRepository.findById(id)
-                .orElseThrow(() -> new com.matrix.exception.ResourceNotFoundException("SystemAudit not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("SystemAudit not found with id: " + id));
     }
 
-    @Override
     @Transactional
     public SystemAudit save(SystemAudit entity) {
         return systemAuditRepository.save(entity);
     }
 
     @Transactional
-    public SystemAudit initiateAudit(Long auditTypeId, Integer stabilityScore,
+    public SystemAudit initiateAudit(AuditTypeEnum auditType, Integer stabilityScore,
                                      Boolean pointOfNoReturn, Long initiatedById,
-                                     String auditData, String status) {
-
+                                     String auditData, AuditStatusEnum status) {
         User initiatedBy = userRepository.findById(initiatedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         SystemAudit audit = new SystemAudit();
-        // audit.setAuditType(auditType); // Would need AuditType entity
+        audit.setAuditType(auditType);
         audit.setStabilityScore(stabilityScore);
         audit.setPointOfNoReturn(pointOfNoReturn);
         audit.setInitiatedBy(initiatedBy);
@@ -65,7 +64,7 @@ public class SystemAuditService extends BaseService<SystemAudit, Long> {
     }
 
     @Transactional
-    public void updateAuditStatus(Long auditId, String status, Integer stabilityScore) {
+    public void updateAuditStatus(Long auditId, AuditStatusEnum status, Integer stabilityScore) {
         SystemAudit audit = findById(auditId);
         audit.setStatus(status);
         if (stabilityScore != null) {
@@ -75,7 +74,7 @@ public class SystemAuditService extends BaseService<SystemAudit, Long> {
     }
 
     @Transactional(readOnly = true)
-    public List<SystemAudit> getAuditsByStatus(String status) {
+    public List<SystemAudit> getAuditsByStatus(AuditStatusEnum status) {
         return systemAuditRepository.findByStatus(status);
     }
 
@@ -85,13 +84,14 @@ public class SystemAuditService extends BaseService<SystemAudit, Long> {
     }
 
     private void notifyWatchersAboutAudit(User initiator) {
-        List<User> watchers = userRepository.findByRoleName("Смотритель");
+        List<User> watchers = userRepository.findByRole(RoleEnum.MONITOR);
 
         for (User watcher : watchers) {
-            messageService.sendSystemMessage(
+            messageService.sendMessage(
+                    initiator.getId(),
+                    watcher.getId(),
                     "Запущен системный аудит пользователем: " + initiator.getUsername() +
-                            ". Возможны задержки в работе системы.",
-                    watcher.getId()
+                            ". Возможны задержки в работе системы."
             );
         }
     }

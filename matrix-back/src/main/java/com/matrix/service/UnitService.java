@@ -1,7 +1,10 @@
 package com.matrix.service;
 
 import com.matrix.entity.auxiliary.MatrixIteration;
-import com.matrix.entity.auxiliary.Role;
+import com.matrix.entity.auxiliary.RealLocation;
+import com.matrix.entity.enums.OracleRequestStatusEnum;
+import com.matrix.entity.enums.RoleEnum;
+import com.matrix.entity.enums.UnitStatusEnum;
 import com.matrix.entity.primary.ChosenOne;
 import com.matrix.entity.primary.OracleRequest;
 import com.matrix.entity.primary.Unit;
@@ -30,8 +33,9 @@ public class UnitService {
     private final OracleRequestRepository oracleRequestRepository;
     private final MatrixIterationRepository matrixIterationRepository;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final ChosenOneRepository chosenOneRepository;
+    private final RealLocationRepository realLocationRepository;
+    private final MessageService messageService;
 
     @Transactional(readOnly = true)
     public List<Unit> findAll() {
@@ -47,7 +51,7 @@ public class UnitService {
     @Transactional(readOnly = true)
     public List<Unit> findCandidates() {
         return unitRepository.findCandidates(candidateThreshold,
-                List.of("кандидат", "проснувшийся"));
+                List.of(UnitStatusEnum.CANDIDATE, UnitStatusEnum.AWAKENED));
     }
 
     @Transactional
@@ -65,14 +69,10 @@ public class UnitService {
 
             User systemUser = userRepository.findByUsername("system")
                     .orElseGet(() -> {
-                        // Create system user if not exists
-                        Role systemRole = roleRepository.findByName("Системное Ядро")
-                                .orElseThrow(() -> new BusinessException("System role not found"));
-
                         User newSystemUser = new User();
                         newSystemUser.setUsername("system");
                         newSystemUser.setPassword("default_password");
-                        newSystemUser.setRole(systemRole);
+                        newSystemUser.setRole(RoleEnum.SYSTEM_KERNEL);
                         newSystemUser.setCreatedAt(LocalDateTime.now());
                         newSystemUser.setIsActive(true);
                         return userRepository.save(newSystemUser);
@@ -81,7 +81,7 @@ public class UnitService {
             OracleRequest request = new OracleRequest();
             request.setMatrixIteration(currentIteration);
             request.setUnit(unit);
-            request.setStatus("pending");
+            request.setStatus(OracleRequestStatusEnum.PENDING);
             request.setRequestedBy(systemUser);
             request.setCreatedAt(LocalDateTime.now());
 
@@ -100,28 +100,18 @@ public class UnitService {
         MatrixIteration iteration = matrixIterationRepository.findById(matrixIterationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Matrix iteration not found"));
 
-        Role chosenRole = roleRepository.findByName("Избранный")
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setName("Избранный");
-                    return roleRepository.save(newRole);
-                });
-
-        // Create user for chosen one
         User chosenUser = new User();
         chosenUser.setUsername("chosen_" + unitId);
         chosenUser.setPassword("temp_pass_" + unitId);
-        chosenUser.setRole(chosenRole);
+        chosenUser.setRole(RoleEnum.THE_ONE);
         chosenUser.setCreatedAt(LocalDateTime.now());
         chosenUser.setIsActive(true);
         userRepository.save(chosenUser);
 
-        // Update unit status
-        unit.setStatus("Избранный");
+        unit.setStatus(UnitStatusEnum.THE_ONE);
         unit.setStatusUpdateAt(LocalDateTime.now());
         unitRepository.save(unit);
 
-        // Create chosen one record
         ChosenOne chosenOne = new ChosenOne();
         chosenOne.setUnit(unit);
         chosenOne.setSelectedBy(selectedBy);
@@ -136,5 +126,87 @@ public class UnitService {
     @Transactional(readOnly = true)
     public List<Unit> getUnitsWithHighDisagreement() {
         return unitRepository.findByDisagreementIndexGreaterThan(candidateThreshold);
+    }
+
+    @Transactional
+    public Unit createUnitCandidate(Double disagreementIndex, String dossier, Long locationId) {
+        if (disagreementIndex > 8.5) {
+            Unit unit = new Unit();
+            unit.setDisagreementIndex(disagreementIndex);
+            unit.setStatus(UnitStatusEnum.CANDIDATE);
+            unit.setDossier(dossier);
+            unit.setStatusUpdateAt(LocalDateTime.now());
+
+            if (locationId != null) {
+                RealLocation location = realLocationRepository.findById(locationId)
+                        .orElse(null);
+                unit.setRealLocation(location);
+            }
+
+            Unit saved = unitRepository.save(unit);
+
+            createOracleRequestForCandidate(saved.getId());
+            notifyAgentsAboutCandidate(saved);
+
+            return saved;
+        }
+        return null;
+    }
+
+    private void createOracleRequestForCandidate(Long unitId) {
+        Unit unit = unitRepository.findById(unitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Unit not found"));
+
+        MatrixIteration currentIteration = matrixIterationRepository.findTopByOrderByIdDesc()
+                .orElseThrow(() -> new BusinessException("No matrix iteration found"));
+
+        User system = userRepository.findByUsername("system")
+                .orElseThrow(() -> new BusinessException("System user not found"));
+
+        OracleRequest request = new OracleRequest();
+        request.setMatrixIteration(currentIteration);
+        request.setUnit(unit);
+        request.setStatus(OracleRequestStatusEnum.PENDING);
+        request.setRequestedBy(system);
+        request.setCreatedAt(LocalDateTime.now());
+
+        oracleRequestRepository.save(request);
+    }
+
+    private void notifyAgentsAboutCandidate(Unit unit) {
+        User systemUser = userRepository.findByUsername("system")
+                .orElseThrow(() -> new BusinessException("System user not found"));
+
+        List<User> agents = userRepository.findByRole(RoleEnum.AGENT_SMITH);
+        for (User agent : agents) {
+            if (agent.getIsActive()) {
+                try {
+                    messageService.sendMessage(
+                            systemUser.getId(),
+                            agent.getId(),
+                            "Обнаружен кандидат! ID: " + unit.getId() +
+                                    ", Индекс несогласия: " + unit.getDisagreementIndex() +
+                                    ", Досье: " + unit.getDossier()
+                    );
+                } catch (Exception e) {
+                    log.error("Failed to send message to agent {}", agent.getId(), e);
+                }
+            }
+        }
+
+        List<User> monitors = userRepository.findByRole(RoleEnum.MONITOR);
+        for (User monitor : monitors) {
+            if (monitor.getIsActive()) {
+                try {
+                    messageService.sendMessage(
+                            systemUser.getId(),
+                            monitor.getId(),
+                            "Кандидат обнаружен: " + unit.getId()
+                    );
+                } catch (Exception e) {
+                    log.error("Failed to send message to monitor {}", monitor.getId(), e);
+                }
+            }
+        }
     }
 }

@@ -1,9 +1,12 @@
 package com.matrix.entity.primary;
 
 import com.matrix.entity.auxiliary.MatrixIteration;
+import com.matrix.entity.enums.OracleRequestStatusEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,8 +27,9 @@ public class OracleRequest {
     @JoinColumn(name = "unit_id", nullable = false)
     private Unit unit;
 
-    @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "oracle_request_status_enum")
+    private OracleRequestStatusEnum status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_by", nullable = false)
@@ -34,7 +38,8 @@ public class OracleRequest {
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @OneToOne(mappedBy = "oracleRequest", cascade = CascadeType.ALL, orphanRemoval = true)
