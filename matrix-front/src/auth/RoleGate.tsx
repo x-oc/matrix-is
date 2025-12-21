@@ -1,4 +1,4 @@
-import { Role } from "../types";
+import { Role } from "../types/types";
 import { useAuth } from "@auth/useAuth";
 
 export default function RoleGate({ allow, children }: { allow: Role[]; children: React.ReactNode }) {

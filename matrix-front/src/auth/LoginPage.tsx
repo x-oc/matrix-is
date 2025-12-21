@@ -14,7 +14,7 @@ import {
   CardContent,
   Container,
 } from "@mui/material";
-import { Role } from "../types";
+import { Role } from "../types/types";
 
 interface LoginPageProps {
   onLogin: (username: string, role: Role) => void;

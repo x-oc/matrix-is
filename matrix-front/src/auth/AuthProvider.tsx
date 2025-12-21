@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { Role } from "../types";
+import type { Role } from "../types/types";
 import { AuthCtx, type User } from "./auth-context";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,7 @@
 import {
   Ticket, Severity, Role, Candidate, Forecast, OrphanProgram, Simulation,
   Audit, TheOneCandidate, AppSummary
-} from "../types";
+} from "../types/types";
 
 const delay = (ms=400) => new Promise(res => setTimeout(res, ms));
 const nowISO = () => new Date().toISOString();

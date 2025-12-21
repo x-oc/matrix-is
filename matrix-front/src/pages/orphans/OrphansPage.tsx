@@ -6,7 +6,7 @@ import {
   createPersonalSimulation,
   listSimulations
 } from "@api/client";
-import type { OrphanProgram, Simulation } from "../../types";
+import type { OrphanProgram, Simulation } from "../../types/types";
 import {
   Card,
   CardContent,

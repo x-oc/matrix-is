@@ -1,5 +1,5 @@
 import { Chip } from "@mui/material";
-import { Role } from "../types";
+import { Role } from "../types/types";
 
 const labels: Record<Role, string> = {
   ARCHITECT: "🧠 Архитектор",

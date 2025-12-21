@@ -1,38 +1,51 @@
-import { Card, CardContent, CardActions, Button, Grid, Typography, Stack, Box, Alert, CircularProgress, Paper, Chip, Divider } from "@mui/material";
-import Field from "@components/Field";
-import { useEffect, useState } from "react";
-import { getSummary, kernelDetectGlitch, kernelDetectCandidate } from "@api/client";
-import type { AppSummary } from "../types";
-import { useAuth } from "@auth/useAuth";
-import { has } from "@auth/permissions";
+import { useState, useEffect } from 'react';
+import {
+  Card, CardContent, Grid, Typography, Stack, Box,
+  Alert, CircularProgress, Paper, Divider, Button
+} from '@mui/material';
+import { useAuth } from '../auth/useAuth';
+import { has } from '../auth/permissions';
+import {
+  getDashboardSummary,
+  kernelDetectGlitch,
+  kernelDetectCandidate,
+  getAllTickets,
+  getAllUnits
+} from '../api/client';
+import { RoleEnum } from '../types/types';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
-  if (!user) return null;
-  const [s, setS] = useState<AppSummary | null>(null);
-  const [title, setTitle] = useState("Глитч текстуры");
-  const [desc, setDesc] = useState("Рябь стен");
-  const [mass, setMass] = useState(false);
-  const [candName, setCandName] = useState("Subject XYZ-777");
-  const [dissent, setDissent] = useState(8.6);
+  const [summary, setSummary] = useState<any>(null);
+  const [ticketCount, setTicketCount] = useState(0);
+  const [unitCount, setUnitCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [glitchData, setGlitchData] = useState({
+    title: 'Глитч текстуры',
+    description: 'Рябь стен в секторе S-12',
+    massImpact: false
+  });
 
   useEffect(() => {
-    const loadSummary = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const summary = await getSummary();
-        setS(summary);
+        const [summaryData, tickets, units] = await Promise.all([
+          getDashboardSummary(),
+          getAllTickets(),
+          getAllUnits()
+        ]);
+        setSummary(summaryData);
+        setTicketCount(tickets.length);
+        setUnitCount(units.length);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка загрузки сводки');
+        setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
       } finally {
         setLoading(false);
       }
     };
-    loadSummary();
+    loadData();
   }, []);
 
   if (loading) {
@@ -61,131 +74,165 @@ export default function Dashboard() {
       )}
 
       <Grid container spacing={3}>
-        {(has(user.role, "VIEW_DASHBOARD")) && (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Сводка системы
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Открытые инциденты
-                    </Typography>
-                    <Typography variant="h4" color="primary">
-                      {s?.openIncidents ?? "…"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Кандидаты
-                    </Typography>
-                    <Typography variant="h4" color="secondary">
-                      {s?.candidates ?? "…"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Программы-сироты
-                    </Typography>
-                    <Typography variant="h4" color="warning.main">
-                      {s?.orphanPrograms ?? "…"}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+        {/* Статистика системы */}
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Открытые инциденты
+              </Typography>
+              <Typography variant="h4" color="error">
+                {summary?.openIncidents || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Всего тикетов: {ticketCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {has(user.role, "KERNEL_CREATE_GLITCH") && (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Кандидаты
+              </Typography>
+              <Typography variant="h4" color="warning.main">
+                {summary?.candidates || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Всего юнитов: {unitCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Закрыто сегодня
+              </Typography>
+              <Typography variant="h4" color="success.main">
+                {summary?.closedToday || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                За последние 24 часа
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Программы-сироты
+              </Typography>
+              <Typography variant="h4" color="info.main">
+                {summary?.orphanPrograms || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Требуют решения
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* UC-101: Kernel creates glitch ticket */}
+        {user?.role === RoleEnum.SYSTEM_KERNEL && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Зафиксировать глитч (UC-101)
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
-                  <Field label="Заголовок" value={title} onChange={e => setTitle(e.target.value)} />
-                  <Field label="Описание" value={desc} onChange={e => setDesc(e.target.value)} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Массовый эффект
-                    </Typography>
-                    <Chip
-                      label={mass ? "Да" : "Нет"}
-                      color={mass ? "error" : "default"}
-                      onClick={() => setMass(!mass)}
-                      clickable
+                  <input
+                    type="text"
+                    value={glitchData.title}
+                    onChange={(e) => setGlitchData({...glitchData, title: e.target.value})}
+                    placeholder="Заголовок"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
+                  <textarea
+                    value={glitchData.description}
+                    onChange={(e) => setGlitchData({...glitchData, description: e.target.value})}
+                    placeholder="Описание"
+                    rows={3}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={glitchData.massImpact}
+                      onChange={(e) => setGlitchData({...glitchData, massImpact: e.target.checked})}
                     />
-                  </Box>
+                    Массовый эффект (более 100 юнитов)
+                  </label>
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      try {
+                        await kernelDetectGlitch(glitchData);
+                        alert('Тикет создан');
+                        setGlitchData({
+                          title: '',
+                          description: '',
+                          massImpact: false
+                        });
+                      } catch (err) {
+                        setError('Ошибка создания тикета');
+                      }
+                    }}
+                  >
+                    Создать тикет
+                  </Button>
                 </Stack>
               </CardContent>
-              <CardActions>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={async () => {
-                    try {
-                      await kernelDetectGlitch({ title, description: desc, massImpact: mass });
-                      setTitle("Глитч текстуры");
-                      setDesc("Рябь стен");
-                      setMass(false);
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : 'Ошибка при создании тикета');
-                    }
-                  }}
-                >
-                  Создать тикет
-                </Button>
-              </CardActions>
             </Card>
           </Grid>
         )}
 
-        {has(user.role, "KERNEL_DETECT_CANDIDATE") && (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
+        {/* UC-201: Kernel detect candidate */}
+        {user?.role === RoleEnum.SYSTEM_KERNEL && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Обнаружить «Кандидата» (UC-201)
+                  Обнаружить кандидата (UC-201)
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Stack spacing={2}>
-                  <Field label="Имя" value={candName} onChange={e => setCandName(e.target.value)} />
-                  <Field label="Индекс несогласия" type="number" value={dissent} onChange={e => setDissent(Number(e.target.value))} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Уровень угрозы
-                    </Typography>
-                    <Chip
-                      label={dissent >= 9.5 ? "Критический" : dissent >= 7.0 ? "Высокий" : "Низкий"}
-                      color={dissent >= 9.5 ? "error" : dissent >= 7.0 ? "warning" : "success"}
-                      size="small"
-                    />
-                  </Box>
+                  <input
+                    type="text"
+                    placeholder="Имя кандидата"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Индекс несогласия"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      try {
+                        await kernelDetectCandidate('Subject', 8.5);
+                        alert('Кандидат обнаружен');
+                      } catch (err) {
+                        setError('Ошибка обнаружения кандидата');
+                      }
+                    }}
+                  >
+                    Создать досье
+                  </Button>
                 </Stack>
               </CardContent>
-              <CardActions>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={async () => {
-                    try {
-                      await kernelDetectCandidate(candName, dissent);
-                      setCandName("Subject XYZ-777");
-                      setDissent(8.6);
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : 'Ошибка при создании досье');
-                    }
-                  }}
-                >
-                  Создать досье
-                </Button>
-              </CardActions>
             </Card>
           </Grid>
         )}

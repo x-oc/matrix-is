@@ -1,10 +1,9 @@
-// src/pages/reports/ReportsPage.tsx
 import { useEffect, useState } from "react";
-import { dailySummary, listSimulations, simulationReport } from "@api/client";
-import type { Simulation } from "../../types";
+import { dailySummary, listSimulations, simulationReport } from "../../api";
+import type { Simulation } from "../../types/types";
 import { Card, CardContent, CardActions, Button, Grid, Typography, Stack, Box, Alert, CircularProgress, Paper, Divider, Chip } from "@mui/material";
-import { useAuth } from "@auth/useAuth";
-import { has } from "@auth/permissions";
+import { useAuth } from "../../auth/useAuth";
+import { has } from "../../auth/permissions";
 
 export default function ReportsPage() {
   const { user } = useAuth();
@@ -76,7 +75,7 @@ export default function ReportsPage() {
 
       <Grid container spacing={3}>
         {canViewReports && (
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -110,7 +109,7 @@ export default function ReportsPage() {
         )}
 
         {canViewReports && (
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>

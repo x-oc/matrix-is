@@ -1,4 +1,4 @@
-import { Role } from "../types";
+import { Role } from "../types/types";
 
 export type Ability =
   | "VIEW_DASHBOARD"

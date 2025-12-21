@@ -1,5 +1,5 @@
 import { Chip } from "@mui/material";
-import { TicketStatus } from "../types";
+import { TicketStatus } from "../types/types";
 
 export default function StatusChip({ status }: { status: TicketStatus }) {
   const map: Partial<Record<TicketStatus, "default"|"info"|"warning"|"success"|"error">> = {
