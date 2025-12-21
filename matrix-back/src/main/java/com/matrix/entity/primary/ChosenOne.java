@@ -1,9 +1,11 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.auxiliary.MatrixIteration;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,6 +32,7 @@ public class ChosenOne {
     @JoinColumn(name = "selected_by", nullable = false)
     private User selectedBy;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

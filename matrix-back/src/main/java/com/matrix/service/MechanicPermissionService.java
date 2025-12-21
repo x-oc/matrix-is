@@ -9,7 +9,6 @@ import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.MechanicPermissionRepository;
 import com.matrix.repository.SectorRepository;
 import com.matrix.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +18,20 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MechanicPermissionService extends BaseService<MechanicPermission, Long> {
 
     private final MechanicPermissionRepository mechanicPermissionRepository;
     private final UserRepository userRepository;
     private final SectorRepository sectorRepository;
+
+    public MechanicPermissionService(MechanicPermissionRepository mechanicPermissionRepository,
+                                     UserRepository userRepository,
+                                     SectorRepository sectorRepository) {
+        super(mechanicPermissionRepository);
+        this.mechanicPermissionRepository = mechanicPermissionRepository;
+        this.userRepository = userRepository;
+        this.sectorRepository = sectorRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)

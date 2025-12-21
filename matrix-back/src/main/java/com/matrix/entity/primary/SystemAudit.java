@@ -1,5 +1,6 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.enums.AuditStatusEnum;
 import com.matrix.entity.enums.AuditTypeEnum;
 import jakarta.persistence.*;
@@ -29,6 +30,7 @@ public class SystemAudit {
     @Column(name = "point_of_no_return")
     private Boolean pointOfNoReturn;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiated_by", nullable = false)
     private User initiatedBy;

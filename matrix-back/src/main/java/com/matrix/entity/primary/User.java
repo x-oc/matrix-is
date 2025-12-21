@@ -1,5 +1,6 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.linking.MechanicPermission;
 import com.matrix.entity.linking.UserTicket;
@@ -39,12 +40,15 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MechanicPermission> mechanicPermissions = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserTicket> assignedTickets = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "selectedBy", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ChosenOne> selectedChosenOnes = new HashSet<>();
 }

@@ -4,7 +4,6 @@ import com.matrix.entity.auxiliary.Sector;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.SectorRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +12,14 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SectorService extends BaseService<Sector, Long> {
 
     private final SectorRepository sectorRepository;
+
+    public SectorService(SectorRepository sectorRepository) {
+        super(sectorRepository);
+        this.sectorRepository = sectorRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)

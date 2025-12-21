@@ -3,15 +3,18 @@ package com.matrix.service;
 import com.matrix.entity.auxiliary.MatrixIteration;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.MatrixIterationRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class MatrixIterationService extends BaseService<MatrixIteration, Long> {
 
     private final MatrixIterationRepository matrixIterationRepository;
+
+    public MatrixIterationService(MatrixIterationRepository matrixIterationRepository) {
+        super(matrixIterationRepository);
+        this.matrixIterationRepository = matrixIterationRepository;
+    }
 
     @Transactional(readOnly = true)
     public MatrixIteration getCurrentIteration() {

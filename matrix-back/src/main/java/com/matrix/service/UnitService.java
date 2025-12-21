@@ -9,7 +9,6 @@ import com.matrix.entity.primary.Unit;
 import com.matrix.entity.primary.User;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UnitService extends BaseService<Unit, Long> {
 
     private final UnitRepository unitRepository;
@@ -27,6 +25,19 @@ public class UnitService extends BaseService<Unit, Long> {
     private final MatrixIterationRepository matrixIterationRepository;
     private final ChosenOneRepository chosenOneRepository;
     private final RealLocationRepository realLocationRepository;
+
+    public UnitService(UnitRepository unitRepository,
+                       UserRepository userRepository,
+                       MatrixIterationRepository matrixIterationRepository,
+                       ChosenOneRepository chosenOneRepository,
+                       RealLocationRepository realLocationRepository) {
+        super(unitRepository);
+        this.unitRepository = unitRepository;
+        this.userRepository = userRepository;
+        this.matrixIterationRepository = matrixIterationRepository;
+        this.chosenOneRepository = chosenOneRepository;
+        this.realLocationRepository = realLocationRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<Unit> findCandidates() {

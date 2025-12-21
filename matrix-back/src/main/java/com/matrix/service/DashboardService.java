@@ -21,19 +21,22 @@ public class DashboardService {
     private final TicketRepository ticketRepository;
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
-    private final ReportService reportService;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary() {
         DashboardSummaryResponse response = new DashboardSummaryResponse();
 
         long totalTickets = ticketRepository.count();
-        long openTickets = ticketRepository.countByStatus(TicketStatusEnum.NEW) +
-                ticketRepository.countByStatus(TicketStatusEnum.IN_PROGRESS);
-        long highPriorityTickets = ticketRepository.findAll().stream()
-                .filter(t -> t.getImportanceLevel() != null &&
-                        t.getImportanceLevel().name().equals("HIGH"))
-                .count();
+
+        Long newTickets = ticketRepository.countByStatus(TicketStatusEnum.NEW);
+        Long inProgressTickets = ticketRepository.countByStatus(TicketStatusEnum.IN_PROGRESS);
+        long openTickets = (newTickets != null ? newTickets : 0L) +
+                (inProgressTickets != null ? inProgressTickets : 0L);
+
+        Long highPriorityTickets = ticketRepository.countHighPriorityTickets();
+        if (highPriorityTickets == null) {
+            highPriorityTickets = 0L;
+        }
 
         long totalCandidates = unitRepository.findByStatus(UnitStatusEnum.CANDIDATE).size();
         long awakenedUnits = unitRepository.findByStatus(UnitStatusEnum.AWAKENED).size();
@@ -84,9 +87,11 @@ public class DashboardService {
 
     private double calculateStabilityScore() {
         long totalTickets = ticketRepository.count();
-        long resolvedTickets = ticketRepository.countByStatus(TicketStatusEnum.CLOSED);
+        Long resolvedTickets = ticketRepository.countByStatus(TicketStatusEnum.CLOSED);
 
         if (totalTickets == 0) return 100.0;
-        return (resolvedTickets / (double) totalTickets) * 100.0;
+        if (resolvedTickets == null) return 0.0;
+
+        return (resolvedTickets.doubleValue() / totalTickets) * 100.0;
     }
 }

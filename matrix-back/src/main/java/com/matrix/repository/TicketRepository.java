@@ -15,17 +15,13 @@ import java.util.List;
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByStatus(TicketStatusEnum status);
     List<Ticket> findByAssignedToRole(RoleEnum assignedToRole);
-    List<Ticket> findByImportanceLevel(String importanceLevel);
     List<Ticket> findByThreatLevel(Integer threatLevel);
+    List<Ticket> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT t FROM Ticket t WHERE t.createdAt BETWEEN :startDate AND :endDate")
-    List<Ticket> findByPeriod(@Param("startDate") LocalDateTime startDate,
-                              @Param("endDate") LocalDateTime endDate);
+    Long countByStatus(TicketStatusEnum status);
 
-    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = :status")
-    Long countByStatus(@Param("status") TicketStatusEnum status);
+    List<Ticket> findByAssignedToRoleAndStatus(RoleEnum role, TicketStatusEnum status);
 
-    @Query("SELECT t FROM Ticket t WHERE t.assignedToRole = :role AND t.status = :status")
-    List<Ticket> findByAssignedToRoleAndStatus(@Param("role") RoleEnum role,
-                                               @Param("status") TicketStatusEnum status);
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.importanceLevel = 'HIGH'")
+    Long countHighPriorityTickets();
 }

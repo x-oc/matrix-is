@@ -1,7 +1,9 @@
 package com.matrix.service;
 
 import com.matrix.dto.request.CreateTicketRequest;
-import com.matrix.entity.enums.*;
+import com.matrix.entity.enums.RoleEnum;
+import com.matrix.entity.enums.TicketImportanceEnum;
+import com.matrix.entity.enums.TicketStatusEnum;
 import com.matrix.entity.linking.TicketComment;
 import com.matrix.entity.primary.Message;
 import com.matrix.entity.primary.Ticket;
@@ -9,7 +11,6 @@ import com.matrix.entity.primary.User;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +20,7 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class TicketService {
+public class TicketService extends BaseService<Ticket, Long> {
 
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
@@ -28,6 +28,21 @@ public class TicketService {
     private final MessageRepository messageRepository;
     private final MessageService messageService;
     private final TicketCommentRepository commentRepository;
+
+    public TicketService(TicketRepository ticketRepository,
+                         UserRepository userRepository,
+                         TicketUnitRepository ticketUnitRepository,
+                         MessageRepository messageRepository,
+                         MessageService messageService,
+                         TicketCommentRepository commentRepository) {
+        super(ticketRepository);
+        this.ticketRepository = ticketRepository;
+        this.userRepository = userRepository;
+        this.ticketUnitRepository = ticketUnitRepository;
+        this.messageRepository = messageRepository;
+        this.messageService = messageService;
+        this.commentRepository = commentRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<Ticket> findAll() {

@@ -1,5 +1,6 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.auxiliary.MatrixIteration;
 import com.matrix.entity.enums.OracleRequestStatusEnum;
 import jakarta.persistence.*;
@@ -42,6 +43,7 @@ public class OracleRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "oracleRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private Forecast forecast;
 }

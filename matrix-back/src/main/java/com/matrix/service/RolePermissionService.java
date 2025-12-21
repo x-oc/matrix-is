@@ -6,7 +6,6 @@ import com.matrix.entity.linking.RolePermission;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.RolePermissionRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +14,14 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RolePermissionService extends BaseService<RolePermission, Long> {
 
     private final RolePermissionRepository rolePermissionRepository;
+
+    public RolePermissionService(RolePermissionRepository rolePermissionRepository) {
+        super(rolePermissionRepository);
+        this.rolePermissionRepository = rolePermissionRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)

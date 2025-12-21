@@ -17,9 +17,13 @@ public class RoleEnumConverter implements AttributeConverter<RoleEnum, String> {
 
     @Override
     public RoleEnum convertToEntityAttribute(String dbData) {
-        if (dbData == null) {
+        if (dbData == null || dbData.trim().isEmpty()) {
             return null;
         }
-        return RoleEnum.valueOf(dbData);
+        try {
+            return RoleEnum.valueOf(dbData);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

@@ -8,8 +8,11 @@ import org.springframework.stereotype.Component;
 public class StringToTicketStatusEnumConverter implements Converter<String, TicketStatusEnum> {
     @Override
     public TicketStatusEnum convert(String source) {
+        if (source == null || source.trim().isEmpty()) {
+            return null;
+        }
         try {
-            return TicketStatusEnum.valueOf(source.toUpperCase());
+            return TicketStatusEnum.valueOf(source.toUpperCase().trim());
         } catch (IllegalArgumentException e) {
             return null;
         }

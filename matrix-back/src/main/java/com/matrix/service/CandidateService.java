@@ -1,14 +1,18 @@
 package com.matrix.service;
 
 import com.matrix.entity.auxiliary.MatrixIteration;
-import com.matrix.entity.enums.*;
+import com.matrix.entity.enums.OracleRequestStatusEnum;
+import com.matrix.entity.enums.RoleEnum;
+import com.matrix.entity.enums.UnitStatusEnum;
 import com.matrix.entity.primary.OracleRequest;
 import com.matrix.entity.primary.Unit;
 import com.matrix.entity.primary.User;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
-import com.matrix.repository.*;
-import lombok.RequiredArgsConstructor;
+import com.matrix.repository.MatrixIterationRepository;
+import com.matrix.repository.OracleRequestRepository;
+import com.matrix.repository.UnitRepository;
+import com.matrix.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CandidateService extends BaseService<Unit, Long> {
 
     private final UnitRepository unitRepository;
@@ -27,6 +30,19 @@ public class CandidateService extends BaseService<Unit, Long> {
     private final MatrixIterationRepository matrixIterationRepository;
     private final UserRepository userRepository;
     private final MessageService messageService;
+
+    public CandidateService(UnitRepository unitRepository,
+                            OracleRequestRepository oracleRequestRepository,
+                            MatrixIterationRepository matrixIterationRepository,
+                            UserRepository userRepository,
+                            MessageService messageService) {
+        super(unitRepository);
+        this.unitRepository = unitRepository;
+        this.oracleRequestRepository = oracleRequestRepository;
+        this.matrixIterationRepository = matrixIterationRepository;
+        this.userRepository = userRepository;
+        this.messageService = messageService;
+    }
 
     @Transactional
     public void detectCandidates() {

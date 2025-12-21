@@ -1,5 +1,6 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.enums.*;
 import com.matrix.entity.linking.TicketComment;
 import com.matrix.entity.linking.TicketUnit;
@@ -8,7 +9,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -34,15 +37,18 @@ public class Ticket {
     private Integer threatLevel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "importance_level", columnDefinition = "ticket_importance_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "importance_level")
     private TicketImportanceEnum importanceLevel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "assigned_to_role", nullable = false, columnDefinition = "role_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "assigned_to_role", nullable = false)
     private RoleEnum assignedToRole;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "anomaly_type", nullable = false, columnDefinition = "anomaly_type_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "anomaly_type", nullable = false)
     private AnomalyTypeEnum anomalyType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,15 +67,19 @@ public class Ticket {
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "ticket_status_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", nullable = false)
     private TicketStatusEnum status;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserTicket> assignedUsers = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TicketUnit> affectedUnits = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TicketComment> comments = new HashSet<>();
 }

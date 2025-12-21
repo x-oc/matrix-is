@@ -1,5 +1,6 @@
 package com.matrix.entity.primary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matrix.entity.auxiliary.RealLocation;
 import com.matrix.entity.enums.UnitStatusEnum;
 import com.matrix.entity.linking.TicketUnit;
@@ -38,12 +39,15 @@ public class Unit {
     @JoinColumn(name = "real_location_id")
     private RealLocation realLocation;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TicketUnit> ticketUnits = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OracleRequest> oracleRequests = new HashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ChosenOne> chosenOnes = new HashSet<>();
 }

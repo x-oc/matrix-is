@@ -7,7 +7,6 @@ import com.matrix.entity.primary.Report;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.ReportRepository;
 import com.matrix.repository.TicketRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,15 +18,19 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ReportService {
 
     private final ReportRepository reportRepository;
     private final TicketRepository ticketRepository;
 
+    public ReportService(ReportRepository reportRepository, TicketRepository ticketRepository) {
+        this.reportRepository = reportRepository;
+        this.ticketRepository = ticketRepository;
+    }
+
     @Transactional
     public DailyReportResponse generateDailyReportForArchitect(LocalDateTime periodStart, LocalDateTime periodEnd) {
-        var tickets = ticketRepository.findByPeriod(periodStart, periodEnd);
+        var tickets = ticketRepository.findByCreatedAtBetween(periodStart, periodEnd);
 
         DailyReportResponse response = new DailyReportResponse();
         response.setPeriodStart(periodStart);

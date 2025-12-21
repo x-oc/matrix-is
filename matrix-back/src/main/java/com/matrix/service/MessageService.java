@@ -6,7 +6,6 @@ import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.MessageRepository;
 import com.matrix.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +15,16 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MessageService extends BaseService<Message, Long> {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
+
+    public MessageService(MessageRepository messageRepository, UserRepository userRepository) {
+        super(messageRepository);
+        this.messageRepository = messageRepository;
+        this.userRepository = userRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
