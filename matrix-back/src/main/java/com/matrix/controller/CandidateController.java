@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/candidates")
+@RequestMapping("/candidates")
 @RequiredArgsConstructor
 public class CandidateController extends BaseController {
 

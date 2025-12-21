@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/oracle-predictions")
+@RequestMapping("/oracle-predictions")
 @RequiredArgsConstructor
 public class OraclePredictionController extends BaseController {
 

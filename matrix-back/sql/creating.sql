@@ -312,7 +312,7 @@ INSERT INTO users (username, password, role, created_at, is_active) VALUES
 ('agent_smith_02', 'smith_pass_002', 'AGENT_SMITH', '2024-01-01 00:00:03', TRUE),
 ('oracle_main', 'pr0ph3cy_2024', 'ORACLE', '2024-01-01 00:00:04', TRUE),
 ('keymaster', 'd00rs_4ll', 'KEYMAKER', '2024-01-01 00:00:05', TRUE),
-('monitor_alpha', 'watch_123', 'MONITOR', '2024-01-01 00:00:06', TRUE),
+('monitor_alpha', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:06', TRUE),
 ('monitor_beta', 'watch_456', 'MONITOR', '2024-01-01 00:00:07', TRUE),
 ('sentinel_ctrl', 'ext3rnal_force', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:08', TRUE),
 ('mechanic_01', 'fix1t_001', 'MECHANIC', '2024-01-01 00:00:09', TRUE),

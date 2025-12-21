@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/chosen-ones")
+@RequestMapping("/chosen-ones")
 @RequiredArgsConstructor
 public class ChosenOneController extends BaseController {
 

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/sentinel-tasks")
+@RequestMapping("/sentinel-tasks")
 @RequiredArgsConstructor
 public class SentinelTaskController extends BaseController {
 

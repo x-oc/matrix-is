@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ticket-workflow")
+@RequestMapping("/ticket-workflow")
 @RequiredArgsConstructor
 public class TicketWorkflowController extends BaseController {
 

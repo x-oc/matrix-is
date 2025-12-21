@@ -40,9 +40,7 @@ INSERT INTO real_locations (latitude, longitude, z) VALUES
 (-23.5505, -46.6333, 0),    -- São Paulo
 (19.4326, -99.1332, 0),     -- Mexico City
 (30.0444, 31.2357, 0),      -- Cairo
-(39.9042, 116.4074, 0),     -- Beijing (дополнительная точка)
 (1.3521, 103.8198, 0),      -- Singapore
-(-33.9249, 18.4241, 0),     -- Cape Town
 (59.9311, 30.3609, 0),      -- Saint Petersburg
 (-34.6037, -58.3816, 0),    -- Buenos Aires
 (0, 0, -2000),              -- Deep Zion
@@ -54,7 +52,9 @@ INSERT INTO real_locations (latitude, longitude, z) VALUES
 (-90, 0, -1200),            -- Antarctic Backup
 (90, 0, -1100),             -- Arctic Monitoring
 (0, 90, -950),              -- Indian Ocean Node
-(0, -90, -900);             -- Atlantic Node
+(0, -90, -900),             -- Atlantic Node
+(35.0, 135.0, -600),        -- Japanese Trench
+(-25.0, 130.0, -700);       -- Australian Outback
 
 -- 2. РАСШИРЕННЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЕЙ
 
@@ -95,29 +95,29 @@ INSERT INTO users (username, password, role, created_at, is_active) VALUES
 -- 3. РАСШИРЕННЫЕ ДАННЫЕ ЮНИТОВ
 
 INSERT INTO units (disagreement_index, status, dossier, status_update_at, real_location_id) VALUES
--- Нормальные юниты с разными индексами
-(0.5, 'NORMAL', 'Alice Johnson, kindergarten teacher', '2024-01-24 09:00:00', 11),
-(1.8, 'NORMAL', 'Bob Smith, construction worker', '2024-01-24 10:00:00', 12),
-(3.2, 'NORMAL', 'Carol Davis, nurse', '2024-01-24 11:00:00', 13),
-(4.7, 'NORMAL', 'David Wilson, taxi driver', '2024-01-24 12:00:00', 14),
-(5.5, 'NORMAL', 'Eva Brown, accountant', '2024-01-24 13:00:00', 15),
+-- Нормальные юниты с разными индексами (используем существующие location_id 1-10)
+(0.5, 'NORMAL', 'Alice Johnson, kindergarten teacher', '2024-01-24 09:00:00', 1),
+(1.8, 'NORMAL', 'Bob Smith, construction worker', '2024-01-24 10:00:00', 2),
+(3.2, 'NORMAL', 'Carol Davis, nurse', '2024-01-24 11:00:00', 3),
+(4.7, 'NORMAL', 'David Wilson, taxi driver', '2024-01-24 12:00:00', 4),
+(5.5, 'NORMAL', 'Eva Brown, accountant', '2024-01-24 13:00:00', 5),
 
 -- Кандидаты с разными уровнями несогласия
-(8.6, 'CANDIDATE', 'Frank Miller, philosopher - questioning reality', '2024-01-24 14:00:00', 16),
-(8.9, 'CANDIDATE', 'Grace Lee, physicist - noticing anomalies', '2024-01-24 15:00:00', 17),
-(9.0, 'CANDIDATE', 'Henry Chen, programmer - debug instinct', '2024-01-24 16:00:00', 18),
-(9.3, 'CANDIDATE', 'Irene Park, artist - sees patterns', '2024-01-24 17:00:00', 19),
-(9.1, 'CANDIDATE', 'Jack Taylor, security guard - suspicious nature', '2024-01-24 18:00:00', 20),
+(8.6, 'CANDIDATE', 'Frank Miller, philosopher - questioning reality', '2024-01-24 14:00:00', 6),
+(8.9, 'CANDIDATE', 'Grace Lee, physicist - noticing anomalies', '2024-01-24 15:00:00', 7),
+(9.0, 'CANDIDATE', 'Henry Chen, programmer - debug instinct', '2024-01-24 16:00:00', 8),
+(9.3, 'CANDIDATE', 'Irene Park, artist - sees patterns', '2024-01-24 17:00:00', 9),
+(9.1, 'CANDIDATE', 'Jack Taylor, security guard - suspicious nature', '2024-01-24 18:00:00', 10),
 
--- Проснувшиеся
-(9.7, 'AWAKENED', 'Katherine White - escaped from pods', '2024-01-23 20:00:00', 21),
-(9.6, 'AWAKENED', 'Leo Black - resistance member', '2024-01-23 21:00:00', 22),
-(9.4, 'AWAKENED', 'Mona Green - hacker background', '2024-01-23 22:00:00', 23),
+-- Проснувшиеся (используем новые location_id из нашей вставки - 11-20)
+(9.7, 'AWAKENED', 'Katherine White - escaped from pods', '2024-01-23 20:00:00', 11),
+(9.6, 'AWAKENED', 'Leo Black - resistance member', '2024-01-23 21:00:00', 12),
+(9.4, 'AWAKENED', 'Mona Green - hacker background', '2024-01-23 22:00:00', 13),
 
 -- Подозрительные
-(7.5, 'SUSPICIOUS', 'Nick Blue - frequent deja vu', '2024-01-24 19:00:00', 24),
-(7.8, 'SUSPICIOUS', 'Olivia Yellow - lucid dreams', '2024-01-24 20:00:00', 25),
-(8.2, 'SUSPICIOUS', 'Paul Red - conspiracy theorist', '2024-01-24 21:00:00', 26),
+(7.5, 'SUSPICIOUS', 'Nick Blue - frequent deja vu', '2024-01-24 19:00:00', 14),
+(7.8, 'SUSPICIOUS', 'Olivia Yellow - lucid dreams', '2024-01-24 20:00:00', 15),
+(8.2, 'SUSPICIOUS', 'Paul Red - conspiracy theorist', '2024-01-24 21:00:00', 16),
 
 -- Массовые юниты для тестирования (для триггеров)
 (6.0, 'NORMAL', 'Unit #1001 - test subject', '2024-01-25 08:00:00', 1),
@@ -319,13 +319,13 @@ INSERT INTO tickets_comments (created_by, ticket_id, comment, created_at) VALUES
 -- 16. РАСШИРЕННЫЕ ЗАДАЧИ СЕНТИНЕЛЕЙ
 
 INSERT INTO sentinel_tasks (created_by, status, created_at, sentinel_count, location_id, description) VALUES
-(8, 'ACTIVE', '2024-01-25 09:00:00', 25, 27, 'Patrolling Zion perimeter'),
-(8, 'COMPLETED', '2024-01-24 20:00:00', 8, 28, 'Destroy rebel outpost'),
-(8, 'PENDING', '2024-01-25 10:00:00', 15, 29, 'Intercept rebel transmission'),
-(8, 'ACTIVE', '2024-01-25 11:00:00', 30, 30, 'Guard machine city entrance'),
-(8, 'CANCELLED', '2024-01-25 12:00:00', 10, 31, 'Scout abandoned area - cancelled due to storm'),
-(25, 'ACTIVE', '2024-01-25 13:00:00', 20, 32, 'Search for Nebuchadnezzar'),
-(25, 'PENDING', '2024-01-25 14:00:00', 12, 33, 'Investigate energy spike');
+(8, 'ACTIVE', '2024-01-25 09:00:00', 25, 7, 'Patrolling Zion perimeter'),
+(8, 'COMPLETED', '2024-01-24 20:00:00', 8, 8, 'Destroy rebel outpost'),
+(8, 'PENDING', '2024-01-25 10:00:00', 15, 9, 'Intercept rebel transmission'),
+(8, 'ACTIVE', '2024-01-25 11:00:00', 30, 10, 'Guard machine city entrance'),
+(8, 'CANCELLED', '2024-01-25 12:00:00', 10, 1, 'Scout abandoned area - cancelled due to storm'),
+(25, 'ACTIVE', '2024-01-25 13:00:00', 20, 2, 'Search for Nebuchadnezzar'),
+(25, 'PENDING', '2024-01-25 14:00:00', 12, 3, 'Investigate energy spike');
 
 -- 17. ДОПОЛНИТЕЛЬНЫЕ ДАННЫЕ ДЛЯ ТЕСТИРОВАНИЯ ТРИГГЕРОВ
 -- Добавим массовый тикет с большим количеством юнитов для тестирования автоматической эскалации
@@ -333,35 +333,3 @@ INSERT INTO sentinel_tasks (created_by, status, created_at, sentinel_count, loca
 -- Создаем тикет для массового глитча
 INSERT INTO tickets (title, description, threat_level, importance_level, assigned_to_role, anomaly_type, report_id, matrix_coordinates, created_at, updated_at, status) VALUES
 ('Mass simulation failure', 'Critical failure affecting entire sector population', 3, 'MEDIUM', 'MECHANIC', 'MASS_GLITCH', NULL, 'SECTOR_P16:999,999', '2024-01-25 14:00:00', '2024-01-25 14:05:00', 'NEW');
-
--- Назначаем тикет
-INSERT INTO users_tickets (user_id, ticket_id, assigned_at, processed_at) VALUES
-(19, 19, '2024-01-25 14:05:00', NULL);
-
--- Добавляем более 100 юнитов к этому тикету для тестирования триггера
--- (В реальном скрипте здесь был бы цикл или генерация, но для примера добавим несколько)
-INSERT INTO tickets_units (unit_id, ticket_id, status) VALUES
-(1, 19, 'AFFECTED'),
-(2, 19, 'AFFECTED'),
-(3, 19, 'AFFECTED'),
-(4, 19, 'AFFECTED'),
-(5, 19, 'AFFECTED'),
-(6, 19, 'AFFECTED'),
-(7, 19, 'AFFECTED'),
-(8, 19, 'AFFECTED'),
-(9, 19, 'AFFECTED'),
-(10, 19, 'AFFECTED'),
-(11, 19, 'AFFECTED'),
-(12, 19, 'AFFECTED'),
-(13, 19, 'AFFECTED'),
-(14, 19, 'AFFECTED'),
-(15, 19, 'AFFECTED');
-
--- Добавляем комментарий
-INSERT INTO tickets_comments (created_by, ticket_id, comment, created_at) VALUES
-(7, 19, 'Massive system failure detected. Emergency protocols activated.', '2024-01-25 14:05:00');
-
--- 18. ДОПОЛНИТЕЛЬНЫЕ ТЕСТОВЫЕ СЦЕНАРИИ
-
--- Создаем юнита с высоким индексом несогласия для тестирования триггера create_candidate
-INSERT INTO units (disagreement_index,

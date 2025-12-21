@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/matrix-iterations")
+@RequestMapping("/matrix-iterations")
 @RequiredArgsConstructor
 public class MatrixIterationController extends BaseController {
 

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/mechanic-permissions")
+@RequestMapping("/mechanic-permissions")
 @RequiredArgsConstructor
 public class MechanicPermissionController extends BaseController {
 
