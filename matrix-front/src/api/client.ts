@@ -15,41 +15,55 @@ const api = axios.create({
   }
 });
 
-// Интерцептор для добавления токена
+// Добавьте этот код сразу после создания экземпляра axios
+
+// Интерцептор для логирования запросов
 api.interceptors.request.use(
   (config) => {
+    console.log(`📤 [API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log('📦 Request Headers:', config.headers);
+    console.log('📦 Request Data:', config.data);
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔐 Token added to request');
+    } else {
+      console.log('⚠️ No token found in localStorage');
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('❌ [API Request Error]', error);
+    return Promise.reject(error);
+  }
 );
 
-// Интерцептор для обновления токена
+// Интерцептор для логирования ответов
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken
-        });
-        const { token } = response.data;
-        localStorage.setItem('token', token);
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
+  (response) => {
+    console.log(`📥 [API Response] ${response.status} ${response.config.url}`);
+    console.log('📦 Response Data:', response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`❌ [API Response Error] ${error.config?.url}`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    // Обработка 401 ошибки (неавторизован)
+    if (error.response?.status === 401) {
+      console.log('🔐 Authentication required, logging out...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      window.location.href = '/';
     }
+    
     return Promise.reject(error);
   }
 );

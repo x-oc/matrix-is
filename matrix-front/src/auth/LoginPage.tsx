@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   Container,
+  CircularProgress,
 } from "@mui/material";
 import { login } from "../api/client";
 import { useAuth } from "./useAuth";
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,19 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       setError("");
+      setDebugInfo("Начинается процесс авторизации...");
+      
+      console.log("🔐 [Login Attempt]", { username: username.trim() });
+      
       const authResponse = await login(username.trim(), password.trim());
+      
+      console.log("✅ [Login Success]", authResponse);
+      setDebugInfo(`Авторизация успешна. Роль: ${authResponse.role}, ID: ${authResponse.userId}`);
+      
+      // Проверяем данные перед логином
+      if (!authResponse.userId || !authResponse.role || !authResponse.username) {
+        throw new Error("Некорректные данные от сервера");
+      }
       
       // Логин через контекст с данными от сервера
       authLogin(
@@ -39,12 +53,39 @@ export default function LoginPage() {
         authResponse.role, 
         authResponse.userId
       );
+      
+      setDebugInfo("Перенаправление на главную страницу...");
+      
     } catch (err: any) {
-      setError(err.response?.data?.message || "Неверное имя пользователя или пароль");
+      console.error("❌ [Login Error]", err);
+      
+      let errorMessage = "Ошибка авторизации";
+      
+      if (err.response) {
+        // Сервер ответил с ошибкой
+        setDebugInfo(`Статус: ${err.response.status}, Данные: ${JSON.stringify(err.response.data)}`);
+        errorMessage = err.response.data?.message || `Ошибка ${err.response.status}`;
+      } else if (err.request) {
+        // Запрос был сделан, но ответ не получен
+        setDebugInfo("Нет ответа от сервера. Проверьте: 1) Запущен ли бэкенд, 2) Адрес API: " + import.meta.env.VITE_API_BASE_URL);
+        errorMessage = "Сервер не отвечает. Проверьте подключение.";
+      } else {
+        // Ошибка при настройке запроса
+        setDebugInfo(`Ошибка настройки: ${err.message}`);
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Проверка окружения при загрузке страницы
+  console.log("🌐 [Environment]", {
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+    hasToken: !!localStorage.getItem('token')
+  });
 
   return (
     <Container maxWidth={false} disableGutters sx={{ minHeight: "100vh" }}>
@@ -88,7 +129,12 @@ export default function LoginPage() {
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
+              <Typography variant="body2" fontWeight="bold">{error}</Typography>
+              {debugInfo && (
+                <Typography variant="caption" sx={{ mt: 1, display: 'block', fontFamily: 'monospace' }}>
+                  {debugInfo}
+                </Typography>
+              )}
             </Alert>
           )}
 
@@ -103,6 +149,7 @@ export default function LoginPage() {
               autoComplete="username"
               autoFocus
               disabled={isLoading}
+              helperText="Попробуйте: admin, kernel, monitor"
             />
 
             <TextField
@@ -115,6 +162,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               disabled={isLoading}
+              helperText="Попробуйте: password123"
             />
 
             <Button
@@ -133,11 +181,21 @@ export default function LoginPage() {
                 },
               }}
             >
-              {isLoading ? "Вход..." : "Войти в систему"}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : "Войти в систему"}
             </Button>
           </form>
 
-          <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center", display: "block" }}>
+          <Card sx={{ mt: 2, bgcolor: 'grey.50' }}>
+            <CardContent>
+              <Typography variant="caption" color="text.secondary">
+                <strong>Информация об окружении:</strong><br />
+                API: {import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}<br />
+                Токен: {localStorage.getItem('token') ? 'Есть' : 'Нет'}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center", display: "block", mt: 2 }}>
             Для демо используйте данные из базы данных
           </Typography>
         </Paper>

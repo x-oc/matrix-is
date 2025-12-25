@@ -26,6 +26,6 @@ public class TicketUnit {
     private Ticket ticket;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "ticket_unit_status_enum")
+    @Column(name = "status", nullable = false)
     private TicketUnitStatusEnum status;
 }

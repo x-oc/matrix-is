@@ -14,15 +14,33 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # Изменил с validate на update
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
+        # Важные настройки для работы с CAST
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Отключаем использование JDBC метаданных
+        temp.use_jdbc_metadata_defaults: false
+        # Явное указание на использование строк
+        jdbc.lob.non_contextual_creation: true
+
+        # Дополнительные настройки
+        connection.charSet: UTF-8
         default_schema: public
-        jdbc:
-          batch_size: 20
-          fetch_size: 50
+
+        # Настройки для предотвращения проблем с ENUM
+        jdbc.time_zone: UTC
+
+        # Добавьте эти настройки
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+        format_sql: true
+
+  # Добавляем настройки для автоконфигурации JPA
+  main:
+    allow-bean-definition-overriding: true
 
 server:
   port: 8080
@@ -35,6 +53,8 @@ logging:
     org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.type.descriptor.sql.BasicExtractor: TRACE
+    org.springframework.orm.jpa: DEBUG
 
 matrix:
   security:
@@ -44,3 +64,11 @@ matrix:
   system:
     mass-glitch-threshold: 100
     candidate-disagreement-threshold: 8.5
+
+# Настройки для Jackson (сериализация/десериализация)
+jackson:
+  serialization:
+    write-dates-as-timestamps: false
+  deserialization:
+    fail-on-unknown-properties: false
+  default-property-inclusion: non_null

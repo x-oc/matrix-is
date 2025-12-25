@@ -15,11 +15,11 @@ public class RolePermission {
 
     @Id
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, columnDefinition = "role_enum")
+    @Column(name = "role", nullable = false)
     private RoleEnum role;
 
     @Id
     @Enumerated(EnumType.STRING)
-    @Column(name = "permission", nullable = false, columnDefinition = "permission_enum")
+    @Column(name = "permission", nullable = false)
     private PermissionEnum permission;
 }

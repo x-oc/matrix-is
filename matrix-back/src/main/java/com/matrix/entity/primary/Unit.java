@@ -7,6 +7,8 @@ import com.matrix.entity.linking.TicketUnit;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -26,6 +28,7 @@ public class Unit {
     private Double disagreementIndex;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false, columnDefinition = "unit_status_enum")
     private UnitStatusEnum status;
 
