@@ -306,20 +306,20 @@ INSERT INTO real_locations (latitude, longitude, z) VALUES
 
 -- 4.2. Основные данные
 INSERT INTO users (username, password, role, created_at, is_active) VALUES
-('architect_prime', 'crypt1c_pass', 'ARCHITECT', '2024-01-01 00:00:00', TRUE),
-('system', 'system_hash_123', 'SYSTEM_KERNEL', '2024-01-01 00:00:01', TRUE),
-('agent_smith_01', 'smith_pass_001', 'AGENT_SMITH', '2024-01-01 00:00:02', TRUE),
-('agent_smith_02', 'smith_pass_002', 'AGENT_SMITH', '2024-01-01 00:00:03', TRUE),
-('oracle_main', 'pr0ph3cy_2024', 'ORACLE', '2024-01-01 00:00:04', TRUE),
-('keymaster', 'd00rs_4ll', 'KEYMAKER', '2024-01-01 00:00:05', TRUE),
+('architect_prime', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ARCHITECT', '2024-01-01 00:00:00', TRUE),
+('system', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'SYSTEM_KERNEL', '2024-01-01 00:00:01', TRUE),
+('agent_smith_01', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:02', TRUE),
+('agent_smith_02', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:03', TRUE),
+('oracle_main', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ORACLE', '2024-01-01 00:00:04', TRUE),
+('keymaster', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'KEYMAKER', '2024-01-01 00:00:05', TRUE),
 ('monitor_alpha', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:06', TRUE),
-('monitor_beta', 'watch_456', 'MONITOR', '2024-01-01 00:00:07', TRUE),
-('sentinel_ctrl', 'ext3rnal_force', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:08', TRUE),
-('mechanic_01', 'fix1t_001', 'MECHANIC', '2024-01-01 00:00:09', TRUE),
-('mechanic_02', 'fix1t_002', 'MECHANIC', '2024-01-01 00:00:10', TRUE),
-('neo', 'th3_ch0sen_one', 'AGENT_SMITH', '2024-01-15 12:00:00', TRUE),
-('morpheus', 'r3d_pill', 'MONITOR', '2024-01-15 12:00:01', FALSE),
-('trinity', 'l0v3_m0t0', 'AGENT_SMITH', '2024-01-15 12:00:02', TRUE);
+('monitor_beta', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:07', TRUE),
+('sentinel_ctrl', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:08', TRUE),
+('mechanic_01', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:09', TRUE),
+('mechanic_02', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:10', TRUE),
+('neo', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-15 12:00:00', TRUE),
+('morpheus', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-15 12:00:01', FALSE),
+('trinity', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-15 12:00:02', TRUE);
 
 INSERT INTO units (disagreement_index, status, dossier, status_update_at, real_location_id) VALUES
 (2.5, 'NORMAL', 'Thomas Anderson, programmer at Metacortex', '2024-01-15 08:30:00', 1),

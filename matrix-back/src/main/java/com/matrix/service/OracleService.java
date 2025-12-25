@@ -1,6 +1,7 @@
 package com.matrix.service;
 
 import com.matrix.dto.request.OraclePredictionRequest;
+import com.matrix.dto.request.OracleProcessPredictionRequest;
 import com.matrix.dto.response.OraclePredictionResponse;
 import com.matrix.entity.auxiliary.MatrixIteration;
 import com.matrix.entity.enums.OracleRequestStatusEnum;
@@ -61,35 +62,31 @@ public class OracleService {
     }
 
     @Transactional
-    public OraclePredictionResponse processPredictionAndGetResponse(Long requestId) {
-        OracleRequest request = oracleRequestRepository.findById(requestId)
+    public void processPredictionAndGetResponse(OracleProcessPredictionRequest request) {
+        OracleRequest oracleRequest = oracleRequestRepository.findById(request.getRequestId())
                 .orElseThrow(() -> new ResourceNotFoundException("Oracle request not found"));
 
         User oracleUser = userRepository.findByUsername("oracle_main")
                 .orElseGet(() -> userRepository.findByUsername("system")
                         .orElseThrow(() -> new BusinessException("Oracle user not found")));
 
-        OraclePredictionResponse prediction = generatePrediction(request);
 
         Forecast forecast = new Forecast();
-        forecast.setOracleRequest(request);
-        forecast.setForecast(prediction.getPrediction());
+        forecast.setOracleRequest(oracleRequest);
+        forecast.setForecast(request.getRecommendedAction());
         forecast.setCreatedAt(LocalDateTime.now());
         forecastRepository.save(forecast);
 
-        request.setStatus(OracleRequestStatusEnum.COMPLETED);
-        request.setProcessedAt(LocalDateTime.now());
-        oracleRequestRepository.save(request);
+        oracleRequest.setStatus(OracleRequestStatusEnum.COMPLETED);
+        oracleRequest.setProcessedAt(LocalDateTime.now());
+        oracleRequestRepository.save(oracleRequest);
 
         messageService.sendMessage(
                 oracleUser.getId(),
-                request.getRequestedBy().getId(),
-                "Прогноз для запроса #" + requestId + " готов. Рекомендуемое действие: " +
-                        prediction.getRecommendedAction() + " (вероятность успеха: " +
-                        (int)(prediction.getSuccessRate() * 100) + "%)"
+                oracleRequest.getRequestedBy().getId(),
+                "Прогноз для запроса #" + oracleRequest.getId() + " готов. Рекомендуемое действие: " +
+                        request.getRecommendedAction()
         );
-
-        return prediction;
     }
 
     private OraclePredictionResponse generatePrediction(OracleRequest request) {
@@ -101,7 +98,6 @@ public class OracleService {
 
         Unit unit = request.getUnit();
         double disagreement = unit.getDisagreementIndex();
-        Random random = new Random();
 
         Map<String, Double> probabilities = new HashMap<>();
 

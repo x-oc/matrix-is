@@ -61,36 +61,36 @@ INSERT INTO real_locations (latitude, longitude, z) VALUES
 -- 2.1. Дополнительные пользователи с разными ролями
 INSERT INTO users (username, password, role, created_at, is_active) VALUES
 -- Архитекторы
-('architect_alpha', 'arch_hash_a1', 'ARCHITECT', '2023-12-01 00:00:00', TRUE),
-('architect_beta', 'arch_hash_b2', 'ARCHITECT', '2023-12-15 00:00:00', FALSE),
+('architect_alpha', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ARCHITECT', '2023-12-01 00:00:00', TRUE),
+('architect_beta', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ARCHITECT', '2023-12-15 00:00:00', FALSE),
 
 -- Агенты Смита
-('agent_smith_03', 'smith_pass_003', 'AGENT_SMITH', '2024-01-01 00:00:11', TRUE),
-('agent_smith_04', 'smith_pass_004', 'AGENT_SMITH', '2024-01-01 00:00:12', TRUE),
-('agent_smith_05', 'smith_pass_005', 'AGENT_SMITH', '2024-01-01 00:00:13', FALSE),
-('agent_smith_06', 'smith_pass_006', 'AGENT_SMITH', '2024-01-01 00:00:14', TRUE),
+('agent_smith_03', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:11', TRUE),
+('agent_smith_04', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:12', TRUE),
+('agent_smith_05', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:13', FALSE),
+('agent_smith_06', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:14', TRUE),
 
 -- Мониторы
-('monitor_gamma', 'watch_789', 'MONITOR', '2024-01-01 00:00:15', TRUE),
-('monitor_delta', 'watch_101', 'MONITOR', '2024-01-01 00:00:16', TRUE),
-('monitor_epsilon', 'watch_112', 'MONITOR', '2024-01-01 00:00:17', FALSE),
-('monitor_zeta', 'watch_131', 'MONITOR', '2024-01-01 00:00:18', TRUE),
+('monitor_gamma', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:15', TRUE),
+('monitor_delta', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:16', TRUE),
+('monitor_epsilon', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:17', FALSE),
+('monitor_zeta', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:18', TRUE),
 
 -- Механики
-('mechanic_03', 'fix1t_003', 'MECHANIC', '2024-01-01 00:00:19', TRUE),
-('mechanic_04', 'fix1t_004', 'MECHANIC', '2024-01-01 00:00:20', TRUE),
-('mechanic_05', 'fix1t_005', 'MECHANIC', '2024-01-01 00:00:21', FALSE),
-('mechanic_06', 'fix1t_006', 'MECHANIC', '2024-01-01 00:00:22', TRUE),
+('mechanic_03', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:19', TRUE),
+('mechanic_04', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:20', TRUE),
+('mechanic_05', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:21', FALSE),
+('mechanic_06', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MECHANIC', '2024-01-01 00:00:22', TRUE),
 
 -- Другие роли
-('oracle_backup', 'backup_prophecy', 'ORACLE', '2024-01-01 00:00:23', TRUE),
-('keymaster_2', 'keys_2_all', 'KEYMAKER', '2024-01-01 00:00:24', TRUE),
-('sentinel_ctrl_2', 'ext3rnal_force2', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:25', TRUE),
+('oracle_backup', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ORACLE', '2024-01-01 00:00:23', TRUE),
+('keymaster_2', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'KEYMAKER', '2024-01-01 00:00:24', TRUE),
+('sentinel_ctrl_2', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:25', TRUE),
 
 -- Тестовые пользователи для избранных
-('the_one_01', 'one_pass_001', 'THE_ONE', '2024-01-10 00:00:00', FALSE),
-('the_one_02', 'one_pass_002', 'THE_ONE', '2024-01-12 00:00:00', FALSE),
-('the_one_03', 'one_pass_003', 'THE_ONE', '2024-01-14 00:00:00', FALSE);
+('the_one_01', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'THE_ONE', '2024-01-10 00:00:00', FALSE),
+('the_one_02', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'THE_ONE', '2024-01-12 00:00:00', FALSE),
+('the_one_03', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'THE_ONE', '2024-01-14 00:00:00', FALSE);
 
 -- 3. РАСШИРЕННЫЕ ДАННЫЕ ЮНИТОВ
 

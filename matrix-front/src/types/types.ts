@@ -45,7 +45,7 @@ export interface Unit {
 
 export interface OracleRequest {
   id: number;
-  unitId: number;
+  unit: Unit;
   matrixIterationId: number;
   status: string;
   requestedBy: number;

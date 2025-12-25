@@ -65,7 +65,6 @@ public class TicketService extends BaseService<Ticket, Long> {
         ticket.setUpdatedAt(LocalDateTime.now());
         ticket.setStatus(TicketStatusEnum.NEW);
 
-        System.out.println("ДОШЕЛ ДО СОЗРАНЕНИЯ!!!!");
         return ticketRepository.save(ticket);
     }
 
@@ -82,8 +81,6 @@ public class TicketService extends BaseService<Ticket, Long> {
                         .filter(User::getIsActive)
                         .findFirst()
                         .orElse(null));
-
-        System.out.println("Тикет назначен на роль: " + role);
 
         if (systemUser != null) {
             TicketComment comment = new TicketComment();

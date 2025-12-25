@@ -24,12 +24,12 @@ public class OraclePredictionController extends BaseController {
         return created("Oracle prediction request submitted", oracleRequest);
     }
 
-    @PostMapping("/{requestId}/process")
-    public ResponseEntity<ApiResponse<OraclePredictionResponse>> processPrediction(
-            @PathVariable Long requestId) {
-        OraclePredictionResponse response = oracleService.processPredictionAndGetResponse(requestId);
-        return success("Oracle prediction processed", response);
-    }
+//    @PostMapping("/{requestId}/process")
+//    public ResponseEntity<ApiResponse<OraclePredictionResponse>> processPrediction(
+//            @PathVariable Long requestId) {
+//        OraclePredictionResponse response = oracleService.processPredictionAndGetResponse(requestId);
+//        return success("Oracle prediction processed", response);
+//    }
 
     @GetMapping("/unit/{unitId}/latest")
     public ResponseEntity<ApiResponse<OraclePredictionResponse>> getLatestPrediction(

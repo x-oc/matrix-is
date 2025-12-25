@@ -1,6 +1,7 @@
 package com.matrix.controller;
 
 import com.matrix.dto.request.OraclePredictionRequest;
+import com.matrix.dto.request.OracleProcessPredictionRequest;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.dto.response.OraclePredictionResponse;
 import com.matrix.entity.primary.Forecast;
@@ -27,11 +28,11 @@ public class OracleController extends BaseController {
         return created("Oracle prediction requested", oracleRequest);
     }
 
-    @PostMapping("/process-prediction/{requestId}")
-    public ResponseEntity<ApiResponse<OraclePredictionResponse>> processPrediction(
-            @PathVariable Long requestId) {
-        OraclePredictionResponse response = oracleService.processPredictionAndGetResponse(requestId);
-        return success("Prediction processed successfully", response);
+    @PostMapping("/process-prediction")
+    public ResponseEntity<ApiResponse<Void>> processPrediction(
+            @Valid @RequestBody OracleProcessPredictionRequest request) {
+        oracleService.processPredictionAndGetResponse(request);
+        return success("Prediction processed successfully");
     }
 
     @GetMapping("/requests/pending")

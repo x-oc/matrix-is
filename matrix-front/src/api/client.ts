@@ -237,8 +237,11 @@ export const requestOraclePrediction = async (unitId: number, requestedBy: numbe
   return response.data.data;
 };
 
-export const processPrediction = async (requestId: number): Promise<OraclePredictionResponse> => {
-  const response = await api.post<ApiResponse<OraclePredictionResponse>>(`/oracle/process-prediction/${requestId}`);
+export const processPrediction = async (requestId: number, recommendedAction?: string): Promise<any> => {
+  const response = await api.post<ApiResponse<any>>(`/oracle/process-prediction`, {
+    requestId,
+    recommendedAction
+  });
   return response.data.data;
 };
 

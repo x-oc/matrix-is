@@ -253,7 +253,18 @@ export default function TicketsPage() {
                     <Typography variant="body1">{selectedTicket.matrixCoordinates}</Typography>
                   </div>
 
-                  {user?.role === RoleEnum.MONITOR && selectedTicket.status === TicketStatusEnum.NEW && (
+                  {user?.role === RoleEnum.MONITOR && selectedTicket.status === TicketStatusEnum.NEW && 
+                    (selectedTicket.assignedToRole === RoleEnum.MECHANIC || selectedTicket.assignedToRole === RoleEnum.AGENT_SMITH) && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Назначен на роль: {selectedTicket.assignedToRole}
+                      </Typography>
+                    </Box>
+                  )
+                  }
+
+                  {user?.role === RoleEnum.MONITOR && selectedTicket.status === TicketStatusEnum.NEW && 
+                    selectedTicket.assignedToRole != RoleEnum.MECHANIC && selectedTicket.assignedToRole != RoleEnum.AGENT_SMITH &&  (
                     <Box>
                       <Typography variant="subtitle2" gutterBottom>
                         Назначить исполнителя
@@ -338,7 +349,7 @@ export default function TicketsPage() {
                       Добавить
                     </Button>
                     {comments.map(comment => (
-                      <Box key={comment.id} sx={{ mt: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                      <Box key={comment.id} sx={{ mt: 1, p: 1, bgcolor: 'grey.600', borderRadius: 1 }}>
                         <Typography variant="body2">{comment.comment}</Typography>
                         <Typography variant="caption" color="text.secondary">
                           {new Date(comment.createdAt).toLocaleString()}
