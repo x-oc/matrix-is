@@ -1,7 +1,9 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.request.AddTicketCommentRequest;
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.dto.response.TicketCommentResponse;
 import com.matrix.entity.linking.TicketComment;
 import com.matrix.service.TicketCommentService;
 import jakarta.validation.Valid;
@@ -19,18 +21,18 @@ public class TicketCommentController extends BaseController {
     private final TicketCommentService commentService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<TicketComment>> addComment(@Valid @RequestBody AddTicketCommentRequest request) {
+    public ResponseEntity<ApiResponse<TicketCommentResponse>> addComment(@Valid @RequestBody AddTicketCommentRequest request) {
         TicketComment comment = commentService.addComment(
                 request.getTicketId(),
                 request.getCreatedBy(),
                 request.getComment()
         );
-        return created("Comment added", comment);
+        return created("Comment added", CommonMapper.map(comment));
     }
 
     @GetMapping("/ticket/{ticketId}")
-    public ResponseEntity<ApiResponse<List<TicketComment>>> getCommentsForTicket(@PathVariable Long ticketId) {
+    public ResponseEntity<ApiResponse<List<TicketCommentResponse>>> getCommentsForTicket(@PathVariable Long ticketId) {
         List<TicketComment> comments = commentService.getCommentsForTicket(ticketId);
-        return success(comments);
+        return success(comments.stream().map(CommonMapper::map).toList());
     }
 }

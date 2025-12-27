@@ -1,7 +1,6 @@
 package com.matrix.entity.primary;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.matrix.entity.enums.AuditStatusEnum;
 import com.matrix.entity.enums.AuditTypeEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -45,8 +44,8 @@ public class SystemAudit {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", nullable = false, columnDefinition = "audit_status_enum")
-    private AuditStatusEnum status;
+//    @Enumerated(EnumType.STRING)
+//    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+//    @Column(name = "status", nullable = false, columnDefinition = "audit_status_enum")
+//    private AuditStatusEnum status;
 }

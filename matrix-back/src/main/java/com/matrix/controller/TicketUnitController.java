@@ -1,11 +1,9 @@
 package com.matrix.controller;
 
-import com.matrix.dto.request.LinkTicketUnitRequest;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.entity.enums.TicketUnitStatusEnum;
 import com.matrix.entity.linking.TicketUnit;
 import com.matrix.service.TicketUnitService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,17 +16,6 @@ import java.util.List;
 public class TicketUnitController extends BaseController {
 
     private final TicketUnitService ticketUnitService;
-
-    @PostMapping("/link")
-    public ResponseEntity<ApiResponse<TicketUnit>> linkTicketToUnit(
-            @Valid @RequestBody LinkTicketUnitRequest request) {
-        TicketUnit ticketUnit = ticketUnitService.linkTicketToUnit(
-                request.getTicketId(),
-                request.getUnitId(),
-                request.getStatus()
-        );
-        return created("Ticket linked to unit", ticketUnit);
-    }
 
     @GetMapping("/ticket/{ticketId}")
     public ResponseEntity<ApiResponse<List<TicketUnit>>> getByTicket(@PathVariable Long ticketId) {

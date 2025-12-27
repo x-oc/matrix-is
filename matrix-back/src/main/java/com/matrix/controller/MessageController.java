@@ -1,7 +1,9 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.request.SendMessageRequest;
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.dto.response.MessageResponse;
 import com.matrix.entity.primary.Message;
 import com.matrix.service.MessageService;
 import jakarta.validation.Valid;
@@ -19,24 +21,24 @@ public class MessageController extends BaseController {
     private final MessageService messageService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Message>> sendMessage(@Valid @RequestBody SendMessageRequest request) {
+    public ResponseEntity<ApiResponse<MessageResponse>> sendMessage(@Valid @RequestBody SendMessageRequest request) {
         Message message = messageService.sendMessage(
                 request.getFromUserId(),
                 request.getToUserId(),
                 request.getText()
         );
-        return created("Message sent", message);
+        return created("Message sent", CommonMapper.map(message));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<Message>>> getMessagesForUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<List<MessageResponse>>> getMessagesForUser(@PathVariable Long userId) {
         List<Message> messages = messageService.getMessagesForUser(userId);
-        return success(messages);
+        return success(messages.stream().map(CommonMapper::map).toList());
     }
 
     @GetMapping("/sent/{userId}")
-    public ResponseEntity<ApiResponse<List<Message>>> getSentMessages(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<List<MessageResponse>>> getSentMessages(@PathVariable Long userId) {
         List<Message> messages = messageService.getSentMessages(userId);
-        return success(messages);
+        return success(messages.stream().map(CommonMapper::map).toList());
     }
 }

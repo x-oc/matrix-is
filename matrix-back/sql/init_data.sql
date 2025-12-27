@@ -159,13 +159,13 @@ INSERT INTO mechanic_permissions (user_id, sector_id, permission_start, permissi
 
 -- 6. РАСШИРЕННЫЕ СИСТЕМНЫЕ АУДИТЫ
 
-INSERT INTO system_audits (audit_type, stability_score, point_of_no_return, initiated_by, audit_data, created_at, status) VALUES
-('SECTOR_STABILITY_AUDIT', 85, FALSE, 2, '{"sector": "SECTOR_A1", "glitch_count": 45, "avg_response_time": "45s"}', '2024-01-20 10:00:00', 'COMPLETED'),
-('RESOURCE_AUDIT', 92, FALSE, 2, '{"cpu_usage": "78%", "memory_usage": "65%", "storage_available": "45PB"}', '2024-01-21 11:00:00', 'COMPLETED'),
-('SECURITY_AUDIT', 88, FALSE, 1, '{"failed_logins": 123, "suspicious_activities": 8, "firewall_breaches": 0}', '2024-01-22 14:00:00', 'COMPLETED'),
-('CHOSEN_ONE_SELECTION', 0, TRUE, 1, '{"candidates_evaluated": 15, "selection_criteria": "disagreement_index>9.5"}', '2024-01-24 09:00:00', 'COMPLETED'),
-('FULL_SYSTEM_AUDIT', 91, FALSE, 2, '{"overall_health": "good", "critical_issues": 2, "performance_score": 94}', '2024-01-23 16:00:00', 'COMPLETED'),
-('PRE_REBOOT_AUDIT', 79, TRUE, 1, '{"unstable_nodes": 28, "data_loss_risk": "medium", "reboot_estimated_time": "2h45m"}', '2024-01-25 08:00:00', 'IN_PROGRESS');
+INSERT INTO system_audits (audit_type, stability_score, point_of_no_return, initiated_by, audit_data, created_at) VALUES
+('SECTOR_STABILITY_AUDIT', 85, FALSE, 2, '{"sector": "SECTOR_A1", "glitch_count": 45, "avg_response_time": "45s"}', '2024-01-20 10:00:00'),
+('RESOURCE_AUDIT', 92, FALSE, 2, '{"cpu_usage": "78%", "memory_usage": "65%", "storage_available": "45PB"}', '2024-01-21 11:00:00'),
+('SECURITY_AUDIT', 88, FALSE, 1, '{"failed_logins": 123, "suspicious_activities": 8, "firewall_breaches": 0}', '2024-01-22 14:00:00'),
+('CHOSEN_ONE_SELECTION', 0, TRUE, 1, '{"candidates_evaluated": 15, "selection_criteria": "disagreement_index>9.5"}', '2024-01-24 09:00:00'),
+('FULL_SYSTEM_AUDIT', 91, FALSE, 2, '{"overall_health": "good", "critical_issues": 2, "performance_score": 94}', '2024-01-23 16:00:00'),
+('PRE_REBOOT_AUDIT', 79, TRUE, 1, '{"unstable_nodes": 28, "data_loss_risk": "medium", "reboot_estimated_time": "2h45m"}', '2024-01-25 08:00:00');
 
 -- 7. РАСШИРЕННЫЕ ОТЧЕТЫ
 

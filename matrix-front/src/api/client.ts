@@ -170,35 +170,6 @@ export const getCommentsForTicket = async (ticketId: number): Promise<TicketComm
   return response.data.data;
 };
 
-// ========== TICKET WORKFLOW ==========
-export const startWork = async (ticketId: number, userId: number): Promise<void> => {
-  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/start-work`, null, {
-    params: { userId }
-  });
-};
-
-export const submitForReview = async (ticketId: number, userId: number): Promise<void> => {
-  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/submit-for-review`, null, {
-    params: { userId }
-  });
-};
-
-export const closeTicket = async (ticketId: number, userId: number): Promise<void> => {
-  await api.put<ApiResponse<void>>(`/ticket-workflow/${ticketId}/close`, null, {
-    params: { userId }
-  });
-};
-
-export const getAssignedToMechanic = async (): Promise<Ticket[]> => {
-  const response = await api.get<ApiResponse<Ticket[]>>('/ticket-workflow/mechanic/assigned');
-  return response.data.data;
-};
-
-export const getAssignedToAgentSmith = async (): Promise<Ticket[]> => {
-  const response = await api.get<ApiResponse<Ticket[]>>('/ticket-workflow/agent-smith/assigned');
-  return response.data.data;
-};
-
 // ========== UNITS ==========
 export const getAllUnits = async (): Promise<Unit[]> => {
   const response = await api.get<ApiResponse<Unit[]>>('/units');
@@ -266,15 +237,8 @@ export const getAllAudits = async (): Promise<SystemAudit[]> => {
   return response.data.data;
 };
 
-export const initiateAudit = async (initiatedById: number): Promise<SystemAudit> => {
-  const response = await api.post<ApiResponse<SystemAudit>>('/system-audits/initiate', null, {
-    params: { initiatedById }
-  });
-  return response.data.data;
-};
-
-export const performAudit = async (auditId: number): Promise<any> => {
-  const response = await api.post<ApiResponse<any>>(`/system-audits/${auditId}/perform`);
+export const initiateAudit = async (): Promise<SystemAudit> => {
+  const response = await api.post<ApiResponse<SystemAudit>>('/system-audits/initiate');
   return response.data.data;
 };
 
@@ -515,16 +479,6 @@ export const checkPermission = async (role: string, permission: string): Promise
 // ========== SECTORS ==========
 export const getAllSectors = async (): Promise<any[]> => {
   const response = await api.get<ApiResponse<any[]>>('/sectors');
-  return response.data.data;
-};
-
-export const getSectorById = async (id: number): Promise<any> => {
-  const response = await api.get<ApiResponse<any>>(`/sectors/${id}`);
-  return response.data.data;
-};
-
-export const getSectorByCode = async (code: string): Promise<any> => {
-  const response = await api.get<ApiResponse<any>>(`/sectors/code/${code}`);
   return response.data.data;
 };
 

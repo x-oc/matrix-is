@@ -193,8 +193,7 @@ CREATE TABLE system_audits (
     point_of_no_return BOOLEAN,
     initiated_by BIGINT NOT NULL REFERENCES users(id),
     audit_data TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    status audit_status_enum NOT NULL
+    created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE oracle_requests (
@@ -380,10 +379,10 @@ INSERT INTO mechanic_permissions (user_id, sector_id, permission_start, permissi
 (11, 6, '2024-01-01 00:00:00', '2024-12-31 23:59:59');
 
 -- 4.4. Бизнес-данные
-INSERT INTO system_audits (audit_type, stability_score, point_of_no_return, initiated_by, audit_data, created_at, status) VALUES
-('FULL_SYSTEM_AUDIT', 94, FALSE, 1, '{"sectors_checked": 150, "anomalies_found": 23, "avg_latency": "15ms"}', '2024-01-19 00:00:00', 'COMPLETED'),
-('PRE_REBOOT_AUDIT', 88, TRUE, 1, '{"unstable_sectors": 12, "population_awareness": 0.015, "resource_leak": "2.3TB/day"}', '2024-01-25 10:00:00', 'IN_PROGRESS'),
-('SECURITY_AUDIT', 96, FALSE, 2, '{"security_breaches": 0, "firewall_strength": "100%", "intrusion_attempts": 45}', '2024-01-18 14:00:00', 'COMPLETED');
+INSERT INTO system_audits (audit_type, stability_score, point_of_no_return, initiated_by, audit_data, created_at) VALUES
+('FULL_SYSTEM_AUDIT', 94, FALSE, 1, '{"sectors_checked": 150, "anomalies_found": 23, "avg_latency": "15ms"}', '2024-01-19 00:00:00'),
+('PRE_REBOOT_AUDIT', 88, TRUE, 1, '{"unstable_sectors": 12, "population_awareness": 0.015, "resource_leak": "2.3TB/day"}', '2024-01-25 10:00:00'),
+('SECURITY_AUDIT', 96, FALSE, 2, '{"security_breaches": 0, "firewall_strength": "100%", "intrusion_attempts": 45}', '2024-01-18 14:00:00');
 
 INSERT INTO reports (period_start, period_end, generated_data, created_at) VALUES
 ('2024-01-19 00:00:00', '2024-01-19 23:59:59', '{"tickets_created": 142, "tickets_closed": 138, "avg_response_time": "2.3m", "stability_score": 94}', '2024-01-20 00:05:00'),
@@ -756,29 +755,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE initiate_system_audit(
-    p_initiated_by INTEGER,
-    p_audit_type audit_type_enum
-) AS $$
-BEGIN
-    INSERT INTO system_audits (
-        audit_type, stability_score, point_of_no_return,
-        initiated_by, audit_data, created_at, status
-    ) VALUES (
-        p_audit_type, 0, FALSE,
-        p_initiated_by, '{}', NOW(), 'STARTED'::audit_status_enum
-    );
-
-    INSERT INTO messages (from_user_id, to_user_id, text, sent_at)
-    SELECT
-        p_initiated_by,
-        id,
-        'System audit initiated. Possible system delays.',
-        NOW()
-    FROM users
-    WHERE role = 'MONITOR';
-END;
-$$ LANGUAGE plpgsql;
+--CREATE OR REPLACE PROCEDURE initiate_system_audit(
+--    p_initiated_by INTEGER,
+--    p_audit_type audit_type_enum
+--) AS $$
+--BEGIN
+--    INSERT INTO system_audits (
+--        audit_type, stability_score, point_of_no_return,
+--        initiated_by, audit_data, created_at, status
+--    ) VALUES (
+--        p_audit_type, 0, FALSE,
+--        p_initiated_by, '{}', NOW(), 'STARTED'::audit_status_enum
+--    );
+--
+--    INSERT INTO messages (from_user_id, to_user_id, text, sent_at)
+--    SELECT
+--        p_initiated_by,
+--        id,
+--        'System audit initiated. Possible system delays.',
+--        NOW()
+--    FROM users
+--    WHERE role = 'MONITOR';
+--END;
+--$$ LANGUAGE plpgsql;
 
 -- 5.3. Триггеры
 CREATE TRIGGER trg_escalate_mass_glitch
@@ -805,7 +804,6 @@ CREATE INDEX idx_reports_period ON reports(period_start, period_end);
 CREATE INDEX idx_units_disagreement_status ON units(disagreement_index, status);
 CREATE INDEX idx_oracle_requests_status ON oracle_requests(status, created_at);
 CREATE INDEX idx_forecasts_request ON forecasts(oracle_request_id);
-CREATE INDEX idx_system_audits_status ON system_audits(status, created_at);
 CREATE INDEX idx_chosen_ones_iteration ON chosen_ones(matrix_iteration_id, selected_at);
 CREATE INDEX idx_units_status_update ON units(status, status_update_at);
 CREATE INDEX idx_messages_to_user ON messages(to_user_id, sent_at DESC);
@@ -823,7 +821,6 @@ WHERE status IN ('CANDIDATE', 'AWAKENED')
 AND disagreement_index > 8.5;
 CREATE INDEX idx_chosen_ones_current ON chosen_ones(matrix_iteration_id, selected_at DESC)
 WHERE restrictions_lifted = TRUE;
-CREATE INDEX idx_system_audits_comprehensive ON system_audits(created_at DESC, status, stability_score);
 CREATE INDEX idx_units_dossier_fts ON units USING gin(to_tsvector('english', dossier));
 CREATE INDEX idx_tickets_description_fts ON tickets USING gin(to_tsvector('english', description));
 CREATE INDEX idx_tickets_anomaly_stats ON tickets(anomaly_type, created_at, threat_level);

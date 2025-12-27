@@ -1,7 +1,9 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.dto.response.DailyReportResponse;
+import com.matrix.dto.response.ReportResponse;
 import com.matrix.entity.primary.Report;
 import com.matrix.service.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +29,9 @@ public class ReportController extends BaseController {
     }
 
     @GetMapping("/latest")
-    public ResponseEntity<ApiResponse<Report>> getLatestReport() {
+    public ResponseEntity<ApiResponse<ReportResponse>> getLatestReport() {
         Report report = reportService.getLatestReport();
-        return success(report);
+        return success(CommonMapper.map(report));
     }
 
     @GetMapping("/for-architect")

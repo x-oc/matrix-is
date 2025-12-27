@@ -8,7 +8,6 @@ import {
 import {
   getAllAudits,
   initiateAudit,
-  performAudit,
   getPointOfNoReturnAnalysis,
   getCandidateUnits,
   selectChosenOne,
@@ -51,21 +50,11 @@ export default function RebootPage() {
 
   const handleStartAudit = async () => {
     try {
-      await initiateAudit(user?.id || 1);
+      await initiateAudit();
       alert('Аудит запущен');
       await loadData();
     } catch (err) {
       setError('Ошибка запуска аудита');
-    }
-  };
-
-  const handlePerformAudit = async (auditId: number) => {
-    try {
-      await performAudit(auditId);
-      alert('Аудит выполнен');
-      await loadData();
-    } catch (err) {
-      setError('Ошибка выполнения аудита');
     }
   };
 
@@ -159,14 +148,6 @@ export default function RebootPage() {
                         </div>
                         
                         <Stack spacing={1}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => handlePerformAudit(audit.id)}
-                            disabled={audit.status !== 'STARTED'}
-                          >
-                            Выполнить аудит
-                          </Button>
                           <Button
                             size="small"
                             variant="outlined"

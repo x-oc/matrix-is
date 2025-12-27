@@ -1,7 +1,9 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.request.SelectChosenOneRequest;
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.dto.response.ChosenOneResponse;
 import com.matrix.entity.primary.ChosenOne;
 import com.matrix.service.ChosenOneService;
 import jakarta.validation.Valid;
@@ -19,26 +21,26 @@ public class ChosenOneController extends BaseController {
     private final ChosenOneService chosenOneService;
 
     @PostMapping("/select")
-    public ResponseEntity<ApiResponse<ChosenOne>> selectChosenOne(
+    public ResponseEntity<ApiResponse<ChosenOneResponse>> selectChosenOne(
             @Valid @RequestBody SelectChosenOneRequest request) {
         ChosenOne chosenOne = chosenOneService.selectChosenOne(
                 request.getUnitId(),
                 request.getSelectedBy(),
                 request.getMatrixIterationId()
         );
-        return created("Chosen one selected", chosenOne);
+        return created("Chosen one selected", CommonMapper.map(chosenOne));
     }
 
     @GetMapping("/current")
-    public ResponseEntity<ApiResponse<ChosenOne>> getCurrentChosenOne() {
+    public ResponseEntity<ApiResponse<ChosenOneResponse>> getCurrentChosenOne() {
         ChosenOne chosenOne = chosenOneService.getCurrentChosenOne();
-        return success(chosenOne);
+        return success(CommonMapper.map(chosenOne));
     }
 
     @PutMapping("/{id}/lift-restrictions")
-    public ResponseEntity<ApiResponse<ChosenOne>> liftRestrictions(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ChosenOneResponse>> liftRestrictions(@PathVariable Long id) {
         ChosenOne chosenOne = chosenOneService.liftRestrictions(id);
-        return success("Restrictions lifted", chosenOne);
+        return success("Restrictions lifted", CommonMapper.map(chosenOne));
     }
 
     @PostMapping("/{id}/final-interview")
@@ -50,8 +52,8 @@ public class ChosenOneController extends BaseController {
     }
 
     @GetMapping("/iteration/{iterationId}")
-    public ResponseEntity<ApiResponse<List<ChosenOne>>> getByIteration(@PathVariable Long iterationId) {
+    public ResponseEntity<ApiResponse<List<ChosenOneResponse>>> getByIteration(@PathVariable Long iterationId) {
         List<ChosenOne> chosenOnes = chosenOneService.getByIteration(iterationId);
-        return success(chosenOnes);
+        return success(chosenOnes.stream().map(CommonMapper::map).toList());
     }
 }

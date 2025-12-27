@@ -1,5 +1,6 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.dto.response.SystemAuditResponse;
 import com.matrix.entity.primary.SystemAudit;
@@ -16,17 +17,9 @@ public class SystemAuditController extends BaseController {
     private final SystemAuditOrchestrationService auditService;
 
     @PostMapping("/initiate")
-    public ResponseEntity<ApiResponse<SystemAudit>> initiateAudit(
-            @RequestParam Long initiatedById) {
-        SystemAudit audit = auditService.initiateFullSystemAudit(initiatedById);
-        return created("System audit initiated", audit);
-    }
-
-    @PostMapping("/{auditId}/perform")
-    public ResponseEntity<ApiResponse<SystemAuditResponse>> performAudit(
-            @PathVariable Long auditId) {
-        SystemAuditResponse response = auditService.performAudit(auditId);
-        return success("Audit completed", response);
+    public ResponseEntity<ApiResponse<SystemAuditResponse>> initiateAudit() {
+        SystemAudit audit = auditService.initiateFullSystemAudit();
+        return created("System audit initiated", CommonMapper.map(audit));
     }
 
     @GetMapping("/{auditId}/point-of-no-return")

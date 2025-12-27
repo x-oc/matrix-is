@@ -5,12 +5,12 @@ import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.TicketImportanceEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
 import com.matrix.entity.linking.TicketComment;
-import com.matrix.entity.primary.Message;
 import com.matrix.entity.primary.Ticket;
 import com.matrix.entity.primary.User;
-import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.*;
+import com.matrix.security.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,33 +20,24 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TicketService extends BaseService<Ticket, Long> {
 
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final TicketUnitRepository ticketUnitRepository;
-    private final MessageRepository messageRepository;
-    private final MessageService messageService;
     private final TicketCommentRepository commentRepository;
-
-    public TicketService(TicketRepository ticketRepository,
-                         UserRepository userRepository,
-                         TicketUnitRepository ticketUnitRepository,
-                         MessageRepository messageRepository,
-                         MessageService messageService,
-                         TicketCommentRepository commentRepository) {
-        super(ticketRepository);
-        this.ticketRepository = ticketRepository;
-        this.userRepository = userRepository;
-        this.ticketUnitRepository = ticketUnitRepository;
-        this.messageRepository = messageRepository;
-        this.messageService = messageService;
-        this.commentRepository = commentRepository;
-    }
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional(readOnly = true)
     public List<Ticket> findAll() {
-        return ticketRepository.findAll();
+        RoleEnum role = customUserDetailsService.getRole();
+
+        if (role == RoleEnum.AGENT_SMITH || role == RoleEnum.MECHANIC) {
+            return ticketRepository.findByAssignedToRole(role);
+        } else {
+            return ticketRepository.findAll();
+        }
     }
 
     @Transactional
@@ -70,17 +61,17 @@ public class TicketService extends BaseService<Ticket, Long> {
 
     @Transactional
     public Ticket assignTicket(Long ticketId, RoleEnum role) {
+        RoleEnum curRole = customUserDetailsService.getRole();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (curRole != ticket.getAssignedToRole()) throw new RuntimeException("С вашей ролью запрещено менять информацию по тикету");
 
         ticket.setAssignedToRole(role);
         ticket.setUpdatedAt(LocalDateTime.now());
 
-        User systemUser = userRepository.findByUsername("system")
-                .orElseGet(() -> userRepository.findAll().stream()
-                        .filter(User::getIsActive)
-                        .findFirst()
-                        .orElse(null));
+        User systemUser = userRepository.findByUsername("system").orElseThrow(() -> new RuntimeException("Системное Ядро временно недоступно"));
 
         if (systemUser != null) {
             TicketComment comment = new TicketComment();
@@ -96,8 +87,12 @@ public class TicketService extends BaseService<Ticket, Long> {
 
     @Transactional
     public void updateStatus(Long ticketId, TicketStatusEnum status) {
+        RoleEnum role = customUserDetailsService.getRole();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (role != ticket.getAssignedToRole()) throw new RuntimeException("С вашей ролью запрещено менять информацию по тикету");
 
         ticket.setStatus(status);
         ticket.setUpdatedAt(LocalDateTime.now());
@@ -106,7 +101,13 @@ public class TicketService extends BaseService<Ticket, Long> {
 
     @Transactional(readOnly = true)
     public List<Ticket> getTicketsByStatus(TicketStatusEnum status) {
-        return ticketRepository.findByStatus(status);
+        RoleEnum role = customUserDetailsService.getRole();
+
+        if (role == RoleEnum.AGENT_SMITH || role == RoleEnum.MECHANIC) {
+            return ticketRepository.findByAssignedToRoleAndStatus(role, status);
+        } else {
+            return ticketRepository.findByStatus(status);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -117,71 +118,5 @@ public class TicketService extends BaseService<Ticket, Long> {
     @Transactional(readOnly = true)
     public long countAffectedUnits(Long ticketId) {
         return ticketUnitRepository.countByTicketId(ticketId);
-    }
-
-    @Transactional
-    public void escalateMassGlitch(Long ticketId) {
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-
-        long affectedUnits = countAffectedUnits(ticketId);
-
-        if (affectedUnits >= 100) {
-            ticket.setImportanceLevel(TicketImportanceEnum.HIGH);
-            ticket.setUpdatedAt(LocalDateTime.now());
-            ticketRepository.save(ticket);
-
-            List<User> watchers = userRepository.findByRole(RoleEnum.MONITOR);
-            User systemUser = userRepository.findByUsername("system")
-                    .orElse(null);
-
-            if (!watchers.isEmpty() && systemUser != null) {
-                for (User watcher : watchers) {
-                    if (watcher.getIsActive()) {
-                        Message message = new Message();
-                        message.setFromUser(systemUser);
-                        message.setToUser(watcher);
-                        message.setText("Обнаружен массовый глитч! Тикет #" + ticketId +
-                                " повышен до Высокого уровня важности. Затронуто юнитов: " + affectedUnits);
-                        message.setSentAt(LocalDateTime.now());
-                        messageRepository.save(message);
-                    }
-                }
-            }
-        }
-    }
-
-    @Transactional
-    public void escalateMassGlitchAutomatically(Long ticketId) {
-        long affectedUnits = ticketUnitRepository.countByTicketId(ticketId);
-
-        if (affectedUnits >= 100) {
-            Ticket ticket = ticketRepository.findById(ticketId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-
-            ticket.setImportanceLevel(TicketImportanceEnum.HIGH);
-            ticket.setStatus(TicketStatusEnum.ESCALATED);
-            ticket.setUpdatedAt(LocalDateTime.now());
-            ticketRepository.save(ticket);
-
-            notifyMonitorsAboutMassGlitch(ticketId, affectedUnits);
-        }
-    }
-
-    private void notifyMonitorsAboutMassGlitch(Long ticketId, long affectedUnits) {
-        List<User> monitors = userRepository.findByRole(RoleEnum.MONITOR);
-        User system = userRepository.findByUsername("system")
-                .orElseThrow(() -> new BusinessException("System user not found"));
-
-        for (User monitor : monitors) {
-            if (monitor.getIsActive()) {
-                messageService.sendMessage(
-                        system.getId(),
-                        monitor.getId(),
-                        "MASS GLITCH ALERT: Ticket #" + ticketId +
-                                " escalated to HIGH. Affected units: " + affectedUnits
-                );
-            }
-        }
     }
 }

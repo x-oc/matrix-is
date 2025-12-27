@@ -4,11 +4,13 @@ import com.matrix.entity.enums.AnomalyTypeEnum;
 import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.TicketImportanceEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 public class TicketResponse {
     private Long id;
     private String title;

@@ -20,7 +20,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addFormatters(FormatterRegistry registry) {
         registry.addConverter(new StringToRoleEnumConverter());
-        registry.addConverter(new StringToAuditStatusEnumConverter());
         registry.addConverter(new StringToAuditTypeEnumConverter());
         registry.addConverter(new StringToTicketStatusEnumConverter());
         registry.addConverter(new StringToSentinelTaskStatusEnumConverter());

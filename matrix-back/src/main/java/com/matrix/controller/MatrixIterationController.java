@@ -1,6 +1,8 @@
 package com.matrix.controller;
 
+import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.response.ApiResponse;
+import com.matrix.dto.response.MatrixIterationResponse;
 import com.matrix.entity.auxiliary.MatrixIteration;
 import com.matrix.service.MatrixIterationService;
 import lombok.RequiredArgsConstructor;
@@ -17,22 +19,22 @@ public class MatrixIterationController extends BaseController {
     private final MatrixIterationService matrixIterationService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<MatrixIteration>>> getAllIterations() {
+    public ResponseEntity<ApiResponse<List<MatrixIterationResponse>>> getAllIterations() {
         List<MatrixIteration> iterations = matrixIterationService.findAll();
-        return success(iterations);
+        return success(iterations.stream().map(CommonMapper::map).toList());
     }
 
     @GetMapping("/current")
-    public ResponseEntity<ApiResponse<MatrixIteration>> getCurrentIteration() {
+    public ResponseEntity<ApiResponse<MatrixIterationResponse>> getCurrentIteration() {
         MatrixIteration iteration = matrixIterationService.getCurrentIteration();
-        return success(iteration);
+        return success(CommonMapper.map(iteration));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<MatrixIteration>> createIteration(
+    public ResponseEntity<ApiResponse<MatrixIterationResponse>> createIteration(
             @RequestParam Integer num,
             @RequestParam String description) {
         MatrixIteration iteration = matrixIterationService.createIteration(num, description);
-        return created("Matrix iteration created", iteration);
+        return created("Matrix iteration created", CommonMapper.map(iteration));
     }
 }
