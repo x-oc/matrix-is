@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/chosen-ones")
 @RequiredArgsConstructor
@@ -21,14 +19,14 @@ public class ChosenOneController extends BaseController {
     private final ChosenOneService chosenOneService;
 
     @PostMapping("/select")
-    public ResponseEntity<ApiResponse<ChosenOneResponse>> selectChosenOne(
+    public ResponseEntity<ApiResponse<Void>> selectChosenOne(
             @Valid @RequestBody SelectChosenOneRequest request) {
-        ChosenOne chosenOne = chosenOneService.selectChosenOne(
+        chosenOneService.selectChosenOne(
                 request.getUnitId(),
                 request.getSelectedBy(),
                 request.getMatrixIterationId()
         );
-        return created("Chosen one selected", CommonMapper.map(chosenOne));
+        return created("Chosen one selected");
     }
 
     @GetMapping("/current")
@@ -49,11 +47,5 @@ public class ChosenOneController extends BaseController {
             @RequestParam String decision) {
         String result = chosenOneService.conductFinalInterview(id, decision);
         return success(result);
-    }
-
-    @GetMapping("/iteration/{iterationId}")
-    public ResponseEntity<ApiResponse<List<ChosenOneResponse>>> getByIteration(@PathVariable Long iterationId) {
-        List<ChosenOne> chosenOnes = chosenOneService.getByIteration(iterationId);
-        return success(chosenOnes.stream().map(CommonMapper::map).toList());
     }
 }

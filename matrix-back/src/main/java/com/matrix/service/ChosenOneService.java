@@ -2,16 +2,13 @@ package com.matrix.service;
 
 import com.matrix.entity.auxiliary.MatrixIteration;
 import com.matrix.entity.enums.RoleEnum;
-import com.matrix.entity.enums.UnitStatusEnum;
 import com.matrix.entity.primary.ChosenOne;
-import com.matrix.entity.primary.Unit;
-import com.matrix.entity.primary.User;
-import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.ChosenOneRepository;
 import com.matrix.repository.MatrixIterationRepository;
 import com.matrix.repository.UnitRepository;
 import com.matrix.repository.UserRepository;
+import com.matrix.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,42 +26,27 @@ public class ChosenOneService {
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     private final MatrixIterationRepository matrixIterationRepository;
+    private final DatabaseProcedureService databaseProcedureService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional
-    public ChosenOne selectChosenOne(Long unitId, Long selectedById, Long matrixIterationId) {
-        Unit unit = unitRepository.findById(unitId)
+    public void selectChosenOne(Long unitId, Long selectedById, Long matrixIterationId) {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ARCHITECT));
+
+        unitRepository.findById(unitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Unit not found"));
-
-        User selectedBy = userRepository.findById(selectedById)
+        userRepository.findById(selectedById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        MatrixIteration iteration = matrixIterationRepository.findById(matrixIterationId)
+        matrixIterationRepository.findById(matrixIterationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Matrix iteration not found"));
 
-        User chosenUser = new User();
-        chosenUser.setUsername("chosen_" + unitId);
-        chosenUser.setPassword("matrix_" + System.currentTimeMillis());
-        chosenUser.setRole(RoleEnum.THE_ONE);
-        chosenUser.setCreatedAt(LocalDateTime.now());
-        chosenUser.setIsActive(true);
-        userRepository.save(chosenUser);
-
-        unit.setStatus(UnitStatusEnum.THE_ONE);
-        unit.setStatusUpdateAt(LocalDateTime.now());
-        unitRepository.save(unit);
-
-        ChosenOne chosenOne = new ChosenOne();
-        chosenOne.setUnit(unit);
-        chosenOne.setSelectedBy(selectedBy);
-        chosenOne.setUser(chosenUser);
-        chosenOne.setMatrixIteration(iteration);
-        chosenOne.setSelectedAt(LocalDateTime.now());
-
-        return chosenOneRepository.save(chosenOne);
+        databaseProcedureService.selectChosenOne(unitId, selectedById, matrixIterationId);
     }
 
     @Transactional
     public ChosenOne liftRestrictions(Long chosenOneId) {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ARCHITECT));
+
         ChosenOne chosenOne = chosenOneRepository.findById(chosenOneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chosen one not found"));
 
@@ -74,24 +56,20 @@ public class ChosenOneService {
 
     @Transactional
     public String conductFinalInterview(Long chosenOneId, String decision) {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ARCHITECT));
+
         ChosenOne chosenOne = chosenOneRepository.findById(chosenOneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chosen one not found"));
 
         chosenOne.setFinalDecision(decision);
-
-        if ("MATRIX_REBOOT".equals(decision)) {
-            chosenOneRepository.save(chosenOne);
-            return "Matrix reboot initiated. All sentinels notified.";
-        } else if ("ZION_DESTRUCTION".equals(decision)) {
-            chosenOneRepository.save(chosenOne);
-            return "Zion destruction protocol activated.";
-        } else {
-            throw new BusinessException("Invalid decision");
-        }
+        chosenOneRepository.save(chosenOne);
+        return decision;
     }
 
     @Transactional(readOnly = true)
     public ChosenOne getCurrentChosenOne() {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ARCHITECT));
+
         MatrixIteration currentIteration = matrixIterationRepository.findTopByOrderByIdDesc()
                 .orElseThrow(() -> new ResourceNotFoundException("No matrix iteration found"));
 
@@ -100,10 +78,5 @@ public class ChosenOneService {
                 .filter(chosenOne -> chosenOne.getRestrictionsLifted() != null && chosenOne.getRestrictionsLifted())
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("No active chosen one found"));
-    }
-
-    @Transactional(readOnly = true)
-    public List<ChosenOne> getByIteration(Long iterationId) {
-        return chosenOneRepository.findByMatrixIterationId(iterationId);
     }
 }

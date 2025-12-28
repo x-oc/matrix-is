@@ -416,11 +416,6 @@ export const conductFinalInterview = async (id: number, decision: string): Promi
   return response.data.data;
 };
 
-export const getChosenOnesByIteration = async (iterationId: number): Promise<ChosenOne[]> => {
-  const response = await api.get<ApiResponse<ChosenOne[]>>(`/chosen-ones/iteration/${iterationId}`);
-  return response.data.data;
-};
-
 // ========== MATRIX ITERATIONS ==========
 export const getAllMatrixIterations = async (): Promise<any[]> => {
   const response = await api.get<ApiResponse<any[]>>('/matrix-iterations');

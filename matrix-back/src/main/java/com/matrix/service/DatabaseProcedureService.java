@@ -18,8 +18,10 @@ public class DatabaseProcedureService {
 
     @Transactional
     public void assignTicket(Long ticketId, RoleEnum role) {
-        jdbcTemplate.execute(
-                String.format("CALL assign_ticket(%d, '%s')", ticketId, role)
+        jdbcTemplate.update(
+                "CALL assign_ticket(?, ?)",
+                ticketId,
+                role
         );
     }
 
@@ -30,6 +32,26 @@ public class DatabaseProcedureService {
                 Long.class,
                 Timestamp.valueOf(periodStart),
                 Timestamp.valueOf(periodEnd)
+        );
+    }
+
+    @Transactional
+    public void processOraclePrediction(Long requestId, Long oracleId, String forecastText) {
+        jdbcTemplate.update(
+                "CALL process_oracle_prediction(?, ?, ?)",
+                requestId,
+                oracleId,
+                forecastText
+        );
+    }
+
+    @Transactional
+    public void selectChosenOne(Long unitId, Long selectedById, Long matrixIterationId) {
+        jdbcTemplate.update(
+                "CALL select_chosen_one(?, ?, ?)",
+                unitId,
+                selectedById,
+                matrixIterationId
         );
     }
 }

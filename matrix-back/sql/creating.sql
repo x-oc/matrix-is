@@ -72,9 +72,7 @@ CREATE TYPE audit_status_enum AS ENUM (
 
 CREATE TYPE oracle_request_status_enum AS ENUM (
     'PENDING',
-    'PROCESSING',
-    'COMPLETED',
-    'FAILED'
+    'COMPLETED'
 );
 
 CREATE TYPE ticket_unit_status_enum AS ENUM (
@@ -595,8 +593,8 @@ BEGIN
     -- Создаем пользователя для Избранного
     INSERT INTO users (username, password, role, is_active, created_at)
     VALUES (
-        'chosen_' || p_unit_id,
-        'temp_pass_' || p_unit_id,
+        'chosen_' || p_unit_id || '_' || p_matrix_iteration_id,
+        '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy',
         v_the_one_role,
         TRUE,
         NOW()
@@ -646,24 +644,12 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE process_oracle_prediction(
     p_request_id INTEGER,
+    p_oracle_id INTEGER,
     p_forecast_text TEXT
 ) AS $$
 DECLARE
-    v_oracle_user_id INTEGER;
     v_requested_by_user_id INTEGER;
 BEGIN
-    SELECT id INTO v_oracle_user_id
-    FROM users
-    WHERE username = 'oracle_main'
-    LIMIT 1;
-
-    IF v_oracle_user_id IS NULL THEN
-        SELECT id INTO v_oracle_user_id
-        FROM users
-        WHERE username = 'system'
-        LIMIT 1;
-    END IF;
-
     SELECT requested_by INTO v_requested_by_user_id
     FROM oracle_requests
     WHERE id = p_request_id;
@@ -676,10 +662,10 @@ BEGIN
         processed_at = NOW()
     WHERE id = p_request_id;
 
-    IF v_oracle_user_id IS NOT NULL AND v_requested_by_user_id IS NOT NULL THEN
+    IF v_requested_by_user_id IS NOT NULL THEN
         INSERT INTO messages (from_user_id, to_user_id, text, sent_at)
         VALUES (
-            v_oracle_user_id,
+            p_oracle_id,
             v_requested_by_user_id,
             'Forecast for request #' || p_request_id || ' ready',
             NOW()

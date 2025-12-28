@@ -38,6 +38,7 @@ public class OracleService {
     private final MatrixIterationRepository matrixIterationRepository;
     private final MessageService messageService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final DatabaseProcedureService databaseProcedureService;
 
     @Transactional
     public OracleRequest requestPrediction(OraclePredictionRequest request) {
@@ -67,25 +68,10 @@ public class OracleService {
         customUserDetailsService.checkRoles(List.of(RoleEnum.ORACLE));
         User oracleUser = customUserDetailsService.getUser();
 
-        OracleRequest oracleRequest = oracleRequestRepository.findById(request.getRequestId())
+        oracleRequestRepository.findById(request.getRequestId())
                 .orElseThrow(() -> new ResourceNotFoundException("Oracle request not found"));
 
-        Forecast forecast = new Forecast();
-        forecast.setOracleRequest(oracleRequest);
-        forecast.setForecast(request.getRecommendedAction());
-        forecast.setCreatedAt(LocalDateTime.now());
-        forecastRepository.save(forecast);
-
-        oracleRequest.setStatus(OracleRequestStatusEnum.COMPLETED);
-        oracleRequest.setProcessedAt(LocalDateTime.now());
-        oracleRequestRepository.save(oracleRequest);
-
-        messageService.sendMessage(
-                oracleUser.getId(),
-                oracleRequest.getRequestedBy().getId(),
-                "Прогноз для запроса #" + oracleRequest.getId() + " готов. Рекомендуемое действие: " +
-                        request.getRecommendedAction()
-        );
+        databaseProcedureService.processOraclePrediction(request.getRequestId(), oracleUser.getId(), request.getRecommendedAction());
     }
 
     @Transactional(readOnly = true)
