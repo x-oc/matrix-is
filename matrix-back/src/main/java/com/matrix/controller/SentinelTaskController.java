@@ -45,12 +45,6 @@ public class SentinelTaskController extends BaseController {
         return success(tasks.stream().map(CommonMapper::map).toList());
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<ApiResponse<List<SentinelTaskResponse>>> getActiveTasks() {
-        List<SentinelTask> tasks = sentinelTaskService.getActiveSentinelTasks();
-        return success(tasks.stream().map(CommonMapper::map).toList());
-    }
-
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<SentinelTaskResponse>> updateTaskStatus(
             @PathVariable Long id,

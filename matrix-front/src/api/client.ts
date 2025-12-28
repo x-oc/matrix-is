@@ -269,11 +269,6 @@ export const getAllSentinelTasks = async (): Promise<SentinelTask[]> => {
   return response.data.data;
 };
 
-export const getActiveSentinelTasks = async (): Promise<SentinelTask[]> => {
-  const response = await api.get<ApiResponse<SentinelTask[]>>('/sentinel-tasks/active');
-  return response.data.data;
-};
-
 export const getSentinelTasksByStatus = async (status: string): Promise<SentinelTask[]> => {
   const response = await api.get<ApiResponse<SentinelTask[]>>(`/sentinel-tasks/status/${status}`);
   return response.data.data;

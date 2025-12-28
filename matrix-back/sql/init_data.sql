@@ -84,7 +84,6 @@ INSERT INTO users (username, password, role, created_at, is_active) VALUES
 
 -- Другие роли
 ('oracle_backup', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ORACLE', '2024-01-01 00:00:23', TRUE),
-('keymaster_2', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'KEYMAKER', '2024-01-01 00:00:24', TRUE),
 ('sentinel_ctrl_2', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:25', TRUE),
 
 -- Тестовые пользователи для избранных
@@ -206,13 +205,10 @@ INSERT INTO tickets (title, description, threat_level, importance_level, assigne
 
 INSERT INTO oracle_requests (matrix_iteration_id, unit_id, status, requested_by, processed_at, created_at) VALUES
 (5, 11, 'COMPLETED', 3, '2024-01-24 10:00:00', '2024-01-24 09:45:00'),
-(5, 12, 'FAILED', 4, '2024-01-24 11:30:00', '2024-01-24 11:15:00'),
 (5, 13, 'PENDING', 5, NULL, '2024-01-24 12:00:00'),
-(5, 14, 'PROCESSING', 6, NULL, '2024-01-24 13:00:00'),
 (5, 15, 'COMPLETED', 3, '2024-01-24 14:30:00', '2024-01-24 14:15:00'),
 (5, 16, 'PENDING', 4, NULL, '2024-01-24 15:00:00'),
-(5, 17, 'COMPLETED', 5, '2024-01-24 16:00:00', '2024-01-24 15:45:00'),
-(5, 18, 'FAILED', 6, '2024-01-24 17:30:00', '2024-01-24 17:15:00');
+(5, 17, 'COMPLETED', 5, '2024-01-24 16:00:00', '2024-01-24 15:45:00');
 
 -- 10. РАСШИРЕННЫЕ ПРОГНОЗЫ
 
@@ -326,10 +322,3 @@ INSERT INTO sentinel_tasks (created_by, status, created_at, sentinel_count, loca
 (8, 'CANCELLED', '2024-01-25 12:00:00', 10, 1, 'Scout abandoned area - cancelled due to storm'),
 (25, 'ACTIVE', '2024-01-25 13:00:00', 20, 2, 'Search for Nebuchadnezzar'),
 (25, 'PENDING', '2024-01-25 14:00:00', 12, 3, 'Investigate energy spike');
-
--- 17. ДОПОЛНИТЕЛЬНЫЕ ДАННЫЕ ДЛЯ ТЕСТИРОВАНИЯ ТРИГГЕРОВ
--- Добавим массовый тикет с большим количеством юнитов для тестирования автоматической эскалации
-
--- Создаем тикет для массового глитча
-INSERT INTO tickets (title, description, threat_level, importance_level, assigned_to_role, anomaly_type, report_id, matrix_coordinates, created_at, updated_at, status) VALUES
-('Mass simulation failure', 'Critical failure affecting entire sector population', 3, 'MEDIUM', 'MECHANIC', 'MASS_GLITCH', NULL, 'SECTOR_P16:999,999', '2024-01-25 14:00:00', '2024-01-25 14:05:00', 'NEW');

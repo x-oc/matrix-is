@@ -6,7 +6,6 @@ CREATE TYPE role_enum AS ENUM (
     'SYSTEM_KERNEL',
     'AGENT_SMITH',
     'ORACLE',
-    'KEYMAKER',
     'MONITOR',
     'SENTINEL_CONTROLLER',
     'MECHANIC',
@@ -308,7 +307,6 @@ INSERT INTO users (username, password, role, created_at, is_active) VALUES
 ('agent_smith_01', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:02', TRUE),
 ('agent_smith_02', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'AGENT_SMITH', '2024-01-01 00:00:03', TRUE),
 ('oracle_main', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'ORACLE', '2024-01-01 00:00:04', TRUE),
-('keymaster', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'KEYMAKER', '2024-01-01 00:00:05', TRUE),
 ('monitor_alpha', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:06', TRUE),
 ('monitor_beta', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'MONITOR', '2024-01-01 00:00:07', TRUE),
 ('sentinel_ctrl', '$2a$10$ViUt3kz4QDWuF53y53.Kh.2ybDhRhxKSCnpglKWef9GbFpRvls3zy', 'SENTINEL_CONTROLLER', '2024-01-01 00:00:08', TRUE),
@@ -341,7 +339,6 @@ INSERT INTO role_permissions (role, permission) VALUES
 ('SYSTEM_KERNEL', 'MONITORING_DASHBOARD'),
 ('SYSTEM_KERNEL', 'CREATE_TICKETS'),
 ('SYSTEM_KERNEL', 'VIEW_TICKETS'),
-('SYSTEM_KERNEL', 'GENERATE_REPORTS'),
 -- Агент Смит
 ('AGENT_SMITH', 'VIEW_TICKETS'),
 ('AGENT_SMITH', 'ORACLE_REQUESTS'),
@@ -350,9 +347,6 @@ INSERT INTO role_permissions (role, permission) VALUES
 -- Оракул
 ('ORACLE', 'ORACLE_REQUESTS'),
 ('ORACLE', 'VIEW_DOSSIER'),
--- Хранитель
-('KEYMAKER', 'CREATE_SIMULATIONS'),
-('KEYMAKER', 'MANAGE_RESOURCES'),
 -- Смотритель
 ('MONITOR', 'MONITORING_DASHBOARD'),
 ('MONITOR', 'ASSIGN_TICKETS'),
@@ -396,7 +390,6 @@ INSERT INTO tickets (title, description, threat_level, importance_level, assigne
 INSERT INTO oracle_requests (matrix_iteration_id, unit_id, status, requested_by, processed_at, created_at) VALUES
 (5, 2, 'COMPLETED', 3, '2024-01-20 14:45:00', '2024-01-20 14:30:00'),
 (5, 3, 'PENDING', 3, NULL, '2024-01-21 09:20:00'),
-(5, 8, 'PROCESSING', 6, NULL, '2024-01-23 20:30:00'),
 (6, 9, 'COMPLETED', 1, '2024-01-25 12:30:00', '2024-01-25 12:00:00');
 
 INSERT INTO forecasts (oracle_request_id, forecast, created_at) VALUES

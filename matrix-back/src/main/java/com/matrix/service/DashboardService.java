@@ -1,17 +1,20 @@
 package com.matrix.service;
 
 import com.matrix.dto.response.DashboardSummaryResponse;
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
 import com.matrix.entity.enums.UnitStatusEnum;
 import com.matrix.repository.TicketRepository;
 import com.matrix.repository.UnitRepository;
 import com.matrix.repository.UserRepository;
+import com.matrix.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -21,9 +24,11 @@ public class DashboardService {
     private final TicketRepository ticketRepository;
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary() {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.MONITOR, RoleEnum.ARCHITECT));
         DashboardSummaryResponse response = new DashboardSummaryResponse();
 
         long totalTickets = ticketRepository.count();

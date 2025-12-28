@@ -30,6 +30,7 @@ public class SentinelTaskService {
 
     @Transactional(readOnly = true)
     public List<SentinelTask> findAll() {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.SENTINEL_CONTROLLER));
         return sentinelTaskRepository.findAll();
     }
 
@@ -53,6 +54,7 @@ public class SentinelTaskService {
     public SentinelTask createTask(Long createdById, SentinelTaskStatusEnum status,
                                    Integer sentinelCount, Long locationId, String description) {
 
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ARCHITECT));
         User createdBy = userRepository.findById(createdById)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -81,16 +83,7 @@ public class SentinelTaskService {
 
     @Transactional(readOnly = true)
     public List<SentinelTask> getTasksByStatus(SentinelTaskStatusEnum status) {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.SENTINEL_CONTROLLER));
         return sentinelTaskRepository.findByStatus(status);
-    }
-
-    @Transactional(readOnly = true)
-    public List<SentinelTask> getTasksByCreator(Long userId) {
-        return sentinelTaskRepository.findByCreatedById(userId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<SentinelTask> getActiveSentinelTasks() {
-        return sentinelTaskRepository.findByStatus(SentinelTaskStatusEnum.ACTIVE);
     }
 }

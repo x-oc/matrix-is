@@ -5,7 +5,6 @@ public enum RoleEnum {
     SYSTEM_KERNEL,
     AGENT_SMITH,
     ORACLE,
-    KEYMAKER,
     MONITOR,
     SENTINEL_CONTROLLER,
     MECHANIC,
