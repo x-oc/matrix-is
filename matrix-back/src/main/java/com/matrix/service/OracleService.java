@@ -90,6 +90,7 @@ public class OracleService {
 
     @Transactional(readOnly = true)
     public List<OracleRequest> getPendingRequests() {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.ORACLE, RoleEnum.AGENT_SMITH));
         return oracleRequestRepository.findByStatus(OracleRequestStatusEnum.PENDING);
     }
 

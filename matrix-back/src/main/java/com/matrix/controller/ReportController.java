@@ -2,7 +2,6 @@ package com.matrix.controller;
 
 import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.response.ApiResponse;
-import com.matrix.dto.response.DailyReportResponse;
 import com.matrix.dto.response.ReportResponse;
 import com.matrix.entity.primary.Report;
 import com.matrix.service.ReportService;
@@ -21,11 +20,11 @@ public class ReportController extends BaseController {
     private final ReportService reportService;
 
     @PostMapping("/generate-daily")
-    public ResponseEntity<ApiResponse<DailyReportResponse>> generateDailyReport(
+    public ResponseEntity<ApiResponse<ReportResponse>> generateDailyReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime periodStart,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime periodEnd) {
-        DailyReportResponse report = reportService.generateDailyReportForArchitect(periodStart, periodEnd);
-        return created("Daily report generated", report);
+        Report report = reportService.generateReportByTime(periodStart, periodEnd);
+        return created("Daily report generated", CommonMapper.map(report));
     }
 
     @GetMapping("/latest")
@@ -35,10 +34,10 @@ public class ReportController extends BaseController {
     }
 
     @GetMapping("/for-architect")
-    public ResponseEntity<ApiResponse<DailyReportResponse>> getArchitectReport() {
+    public ResponseEntity<ApiResponse<ReportResponse>> getReportByMonitor() {
         LocalDateTime periodEnd = LocalDateTime.now();
         LocalDateTime periodStart = periodEnd.minusHours(24);
-        DailyReportResponse report = reportService.generateDailyReportForArchitect(periodStart, periodEnd);
-        return success("Architect report ready", report);
+        Report report = reportService.generateReportByTime(periodStart, periodEnd);
+        return success("Architect report ready", CommonMapper.map(report));
     }
 }

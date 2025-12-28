@@ -507,21 +507,10 @@ BEGIN
     FROM users
     WHERE username = 'system';
 
-    IF v_system_user_id IS NULL THEN
-        INSERT INTO users (username, password, role, created_at, is_active)
-        VALUES ('system', 'default_password', v_system_kernel_role, NOW(), TRUE)
-        RETURNING id INTO v_system_user_id;
-    END IF;
-
     SELECT id INTO v_last_matrix_id
     FROM matrix_iterations
     ORDER BY id DESC
     LIMIT 1;
-
-    IF v_last_matrix_id IS NULL THEN
-        INSERT INTO matrix_iterations (num, description) VALUES (1, 'Initial iteration')
-        RETURNING id INTO v_last_matrix_id;
-    END IF;
 
     INSERT INTO oracle_requests (
         matrix_iteration_id, unit_id, status, requested_by, created_at
@@ -534,58 +523,6 @@ BEGIN
     );
 
     RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION create_glitch_ticket_manual(
-    p_title TEXT,
-    p_description TEXT,
-    p_threat_level INTEGER,
-    p_anomaly_type anomaly_type_enum,
-    p_coordinates TEXT
-) RETURNS INTEGER AS $$
-DECLARE
-    v_ticket_id INTEGER;
-    v_monitor_role role_enum := 'MONITOR';
-BEGIN
-    IF p_threat_level < 1 OR p_threat_level > 3 THEN
-        RAISE EXCEPTION 'threat_level must be between 1 and 3';
-    END IF;
-
-    INSERT INTO tickets (
-        title, description, threat_level, importance_level,
-        assigned_to_role, anomaly_type, matrix_coordinates,
-        created_at, updated_at, status
-    ) VALUES (
-        p_title, p_description, p_threat_level, 'LOW'::ticket_importance_enum,
-        v_monitor_role, p_anomaly_type, p_coordinates,
-        NOW(), NOW(), 'NEW'::ticket_status_enum
-    ) RETURNING id INTO v_ticket_id;
-
-    RETURN v_ticket_id;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION request_oracle_prediction(
-    p_unit_id INTEGER,
-    p_requested_by INTEGER
-) RETURNS INTEGER AS $$
-DECLARE
-    v_request_id INTEGER;
-    v_current_iteration_id INTEGER;
-BEGIN
-    SELECT id INTO v_current_iteration_id
-    FROM matrix_iterations
-    ORDER BY id DESC
-    LIMIT 1;
-
-    INSERT INTO oracle_requests (
-        matrix_iteration_id, unit_id, status, requested_by, created_at
-    ) VALUES (
-        v_current_iteration_id, p_unit_id, 'PENDING'::oracle_request_status_enum, p_requested_by, NOW()
-    ) RETURNING id INTO v_request_id;
-
-    RETURN v_request_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -692,10 +629,6 @@ BEGIN
         RAISE EXCEPTION 'Ticket with ID % does not exist', p_ticket_id;
     END IF;
 
-    SELECT id INTO v_system_user_id
-    FROM users
-    WHERE username = 'system';
-
     UPDATE tickets
     SET assigned_to_role = p_assigned_to_role,
         updated_at = NOW()
@@ -754,30 +687,6 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
-
---CREATE OR REPLACE PROCEDURE initiate_system_audit(
---    p_initiated_by INTEGER,
---    p_audit_type audit_type_enum
---) AS $$
---BEGIN
---    INSERT INTO system_audits (
---        audit_type, stability_score, point_of_no_return,
---        initiated_by, audit_data, created_at, status
---    ) VALUES (
---        p_audit_type, 0, FALSE,
---        p_initiated_by, '{}', NOW(), 'STARTED'::audit_status_enum
---    );
---
---    INSERT INTO messages (from_user_id, to_user_id, text, sent_at)
---    SELECT
---        p_initiated_by,
---        id,
---        'System audit initiated. Possible system delays.',
---        NOW()
---    FROM users
---    WHERE role = 'MONITOR';
---END;
---$$ LANGUAGE plpgsql;
 
 -- 5.3. Триггеры
 CREATE TRIGGER trg_escalate_mass_glitch

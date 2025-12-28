@@ -2,9 +2,9 @@ package com.matrix.security;
 
 import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.primary.User;
+import com.matrix.exception.BusinessException;
 import com.matrix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -62,7 +62,15 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         if (!requiredRoles.contains(user.getRole())) {
-            throw new AccessDeniedException("Insufficient permissions. Required roles: " + requiredRoles);
+            throw new BusinessException("Insufficient permissions. Required roles: " + requiredRoles);
         }
+    }
+
+    public User getSystemKernel() {
+        List<User> systemKernels = userRepository.findByRole(RoleEnum.SYSTEM_KERNEL);
+        if (systemKernels.isEmpty()) {
+            throw new BusinessException("Системное Ядро временно недоступно");
+        }
+        return userRepository.findByRole(RoleEnum.SYSTEM_KERNEL).get(0);
     }
 }

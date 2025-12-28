@@ -4,7 +4,7 @@ import com.matrix.dto.mappers.CommonMapper;
 import com.matrix.dto.response.ApiResponse;
 import com.matrix.dto.response.SystemAuditResponse;
 import com.matrix.entity.primary.SystemAudit;
-import com.matrix.service.SystemAuditOrchestrationService;
+import com.matrix.service.SystemAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class SystemAuditController extends BaseController {
 
-    private final SystemAuditOrchestrationService auditService;
+    private final SystemAuditService auditService;
 
     @PostMapping("/initiate")
     public ResponseEntity<ApiResponse<SystemAuditResponse>> initiateAudit() {

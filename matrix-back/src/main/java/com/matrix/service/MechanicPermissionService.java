@@ -115,11 +115,4 @@ public class MechanicPermissionService extends BaseService<MechanicPermission, L
         }
         mechanicPermissionRepository.deleteById(permissionId);
     }
-
-    @Transactional(readOnly = true)
-    public boolean hasPermission(Long userId, Long sectorId) {
-        return mechanicPermissionRepository.findActivePermissionsByUser(userId, LocalDateTime.now())
-                .stream()
-                .anyMatch(permission -> permission.getSector().getId().equals(sectorId));
-    }
 }

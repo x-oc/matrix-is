@@ -4,9 +4,8 @@ import com.matrix.dto.request.CreateTicketRequest;
 import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.TicketImportanceEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
-import com.matrix.entity.linking.TicketComment;
 import com.matrix.entity.primary.Ticket;
-import com.matrix.entity.primary.User;
+import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.*;
 import com.matrix.security.CustomUserDetailsService;
@@ -24,10 +23,9 @@ import java.util.List;
 public class TicketService extends BaseService<Ticket, Long> {
 
     private final TicketRepository ticketRepository;
-    private final UserRepository userRepository;
     private final TicketUnitRepository ticketUnitRepository;
-    private final TicketCommentRepository commentRepository;
     private final CustomUserDetailsService customUserDetailsService;
+    private final DatabaseProcedureService databaseProcedureService;
 
     @Transactional(readOnly = true)
     public List<Ticket> findAll() {
@@ -60,29 +58,15 @@ public class TicketService extends BaseService<Ticket, Long> {
     }
 
     @Transactional
-    public Ticket assignTicket(Long ticketId, RoleEnum role) {
+    public void assignTicket(Long ticketId, RoleEnum role) {
         RoleEnum curRole = customUserDetailsService.getRole();
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-        if (curRole != ticket.getAssignedToRole()) throw new RuntimeException("С вашей ролью запрещено менять информацию по тикету");
+        if (curRole != ticket.getAssignedToRole()) throw new BusinessException("С вашей ролью запрещено менять информацию по тикету");
 
-        ticket.setAssignedToRole(role);
-        ticket.setUpdatedAt(LocalDateTime.now());
-
-        User systemUser = userRepository.findByUsername("system").orElseThrow(() -> new RuntimeException("Системное Ядро временно недоступно"));
-
-        if (systemUser != null) {
-            TicketComment comment = new TicketComment();
-            comment.setCreatedBy(systemUser);
-            comment.setTicket(ticket);
-            comment.setComment("Тикет назначен на роль: " + role);
-            comment.setCreatedAt(LocalDateTime.now());
-            commentRepository.save(comment);
-        }
-
-        return ticketRepository.save(ticket);
+        databaseProcedureService.assignTicket(ticket.getId(), role);
     }
 
     @Transactional
@@ -92,7 +76,9 @@ public class TicketService extends BaseService<Ticket, Long> {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-        if (role != ticket.getAssignedToRole()) throw new RuntimeException("С вашей ролью запрещено менять информацию по тикету");
+        if (role != ticket.getAssignedToRole() && role != RoleEnum.ARCHITECT) {
+            throw new BusinessException("С вашей ролью запрещено менять информацию по тикету");
+        }
 
         ticket.setStatus(status);
         ticket.setUpdatedAt(LocalDateTime.now());
@@ -111,12 +97,23 @@ public class TicketService extends BaseService<Ticket, Long> {
     }
 
     @Transactional(readOnly = true)
-    public List<Ticket> getTicketsByRoleAndStatus(RoleEnum role, TicketStatusEnum status) {
-        return ticketRepository.findByAssignedToRoleAndStatus(role, status);
-    }
-
-    @Transactional(readOnly = true)
     public long countAffectedUnits(Long ticketId) {
         return ticketUnitRepository.countByTicketId(ticketId);
+    }
+
+    @Transactional
+    public void escalateMassGlitch(Long ticketId) {
+        RoleEnum role = customUserDetailsService.getRole();
+
+        if (role != RoleEnum.MONITOR) throw new BusinessException("С вашей ролью запрещено делать такое действие");
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        long affectedUnits = countAffectedUnits(ticketId);
+
+        if (affectedUnits >= 100) {
+            databaseProcedureService.assignTicket(ticket.getId(), RoleEnum.ARCHITECT);
+        }
     }
 }

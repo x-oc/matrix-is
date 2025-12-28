@@ -4,9 +4,7 @@ import com.matrix.entity.enums.AnomalyTypeEnum;
 import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.TicketImportanceEnum;
 import com.matrix.entity.enums.TicketStatusEnum;
-import com.matrix.entity.linking.TicketUnit;
 import com.matrix.entity.primary.Ticket;
-import com.matrix.entity.primary.User;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.TicketRepository;
@@ -14,7 +12,6 @@ import com.matrix.repository.TicketUnitRepository;
 import com.matrix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,41 +51,6 @@ public class MonitoringService {
     }
 
     /**
-     * F-103: Автоматическое повышение важности тикета при массовых аномалиях
-     */
-    @Transactional
-    public void checkAndEscalateMassGlitch(Long ticketId) {
-        long affectedUnits = ticketUnitRepository.countByTicketId(ticketId);
-
-        if (affectedUnits >= 100) {
-            Ticket ticket = ticketRepository.findById(ticketId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-
-            if (ticket.getImportanceLevel() != TicketImportanceEnum.HIGH) {
-                ticket.setImportanceLevel(TicketImportanceEnum.HIGH);
-                ticket.setUpdatedAt(LocalDateTime.now());
-                ticketRepository.save(ticket);
-
-                // Уведомление Смотрителя
-                User systemUser = userRepository.findByUsername("system")
-                        .orElseThrow(() -> new BusinessException("System user not found"));
-
-                List<User> monitors = userRepository.findByRole(RoleEnum.MONITOR);
-                monitors.stream()
-                        .filter(User::getIsActive)
-                        .forEach(monitor ->
-                                messageService.sendMessage(
-                                        systemUser.getId(),
-                                        monitor.getId(),
-                                        "Массовый глитч обнаружен! Тикет #" + ticketId +
-                                                " повышен до ВЫСОКОЙ важности. Затронуто юнитов: " + affectedUnits
-                                )
-                        );
-            }
-        }
-    }
-
-    /**
      * F-102: Назначение уровня угрозы тикету
      */
     @Transactional
@@ -111,21 +73,5 @@ public class MonitoringService {
         }
 
         return ticketRepository.save(ticket);
-    }
-
-    /**
-     * Ежедневная проверка массовых аномалий
-     */
-    @Scheduled(cron = "0 0 * * * *") // Каждый час
-    @Transactional
-    public void checkMassGlitches() {
-        List<Ticket> tickets = ticketRepository.findAll();
-
-        for (Ticket ticket : tickets) {
-            if (ticket.getStatus() == TicketStatusEnum.NEW ||
-                    ticket.getStatus() == TicketStatusEnum.IN_PROGRESS) {
-                checkAndEscalateMassGlitch(ticket.getId());
-            }
-        }
     }
 }

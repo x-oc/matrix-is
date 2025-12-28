@@ -1,5 +1,6 @@
 package com.matrix.service;
 
+import com.matrix.entity.enums.RoleEnum;
 import com.matrix.entity.enums.SentinelTaskStatusEnum;
 import com.matrix.entity.primary.SentinelTask;
 import com.matrix.entity.primary.User;
@@ -8,6 +9,7 @@ import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.SentinelTaskRepository;
 import com.matrix.repository.UserRepository;
 import com.matrix.repository.RealLocationRepository;
+import com.matrix.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class SentinelTaskService {
     private final SentinelTaskRepository sentinelTaskRepository;
     private final UserRepository userRepository;
     private final RealLocationRepository realLocationRepository;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional(readOnly = true)
     public List<SentinelTask> findAll() {
@@ -39,14 +42,6 @@ public class SentinelTaskService {
     @Transactional
     public SentinelTask save(SentinelTask entity) {
         return sentinelTaskRepository.save(entity);
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        if (!sentinelTaskRepository.existsById(id)) {
-            throw new ResourceNotFoundException("SentinelTask not found with id: " + id);
-        }
-        sentinelTaskRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
@@ -77,8 +72,10 @@ public class SentinelTaskService {
 
     @Transactional
     public SentinelTask updateTaskStatus(Long taskId, SentinelTaskStatusEnum status) {
+        customUserDetailsService.checkRoles(List.of(RoleEnum.SENTINEL_CONTROLLER));
+
         SentinelTask task = findById(taskId);
-        task.setStatus(status); // Уже ENUM
+        task.setStatus(status);
         return sentinelTaskRepository.save(task);
     }
 

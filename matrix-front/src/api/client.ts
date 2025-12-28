@@ -135,11 +135,6 @@ export const getTicketsByStatus = async (status: string): Promise<Ticket[]> => {
   return response.data.data;
 };
 
-export const getTicketsByRoleAndStatus = async (role: string, status: string): Promise<Ticket[]> => {
-  const response = await api.get<ApiResponse<Ticket[]>>(`/tickets/role/${role}/status/${status}`);
-  return response.data.data;
-};
-
 export const assignTicket = async (id: number, role: string): Promise<Ticket> => {
   const response = await api.put<ApiResponse<Ticket>>(`/tickets/${id}/assign`, null, {
     params: { role }
@@ -369,12 +364,6 @@ export const createGlitchTicket = async (request: any): Promise<Ticket> => {
 
 export const autoDetectAndCreateTickets = async (): Promise<void> => {
   await api.post<ApiResponse<void>>('/kernel/candidate');
-};
-
-export const escalateToHighPriority = async (ticketId: number, affectedUnits: number): Promise<void> => {
-  await api.post<ApiResponse<void>>(`/kernel/escalate/${ticketId}`, null, {
-    params: { affectedUnits }
-  });
 };
 
 // ========== TICKET-UNIT LINKING ==========

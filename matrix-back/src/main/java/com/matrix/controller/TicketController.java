@@ -29,11 +29,11 @@ public class TicketController extends BaseController {
     }
 
     @PutMapping("/{id}/assign")
-    public ResponseEntity<ApiResponse<TicketResponse>> assignTicket(
+    public ResponseEntity<ApiResponse<Void>> assignTicket(
             @PathVariable Long id,
             @RequestParam RoleEnum role) {
-        Ticket ticket = ticketService.assignTicket(id, role);
-        return success("Ticket assigned successfully", CommonMapper.map(ticket));
+        ticketService.assignTicket(id, role);
+        return success("Ticket assigned successfully");
     }
 
     @PutMapping("/{id}/status/{status}")
@@ -54,5 +54,11 @@ public class TicketController extends BaseController {
     public ResponseEntity<ApiResponse<List<TicketResponse>>> getTicketsByStatus(@PathVariable TicketStatusEnum status) {
         List<Ticket> tickets = ticketService.getTicketsByStatus(status);
         return success(tickets.stream().map(CommonMapper::map).toList());
+    }
+
+    @PostMapping("/{id}/escalate-mass-glitch")
+    public ResponseEntity<ApiResponse<Void>> escalateMassGlitch(@PathVariable Long id) {
+        ticketService.escalateMassGlitch(id);
+        return success("Mass glitch escalation checked");
     }
 }

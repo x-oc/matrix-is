@@ -30,12 +30,4 @@ public class SystemKernelController extends BaseController {
         systemKernelService.autoDetectAndCreateTickets();
         return success("Candidate detection initiated");
     }
-
-    @PostMapping("/escalate/{ticketId}")
-    public ResponseEntity<ApiResponse<Void>> escalateToHighPriority(
-            @PathVariable Long ticketId,
-            @RequestParam int affectedUnits) {
-        systemKernelService.escalateToHighPriority(ticketId, affectedUnits);
-        return success("Ticket escalated to high priority");
-    }
 }
