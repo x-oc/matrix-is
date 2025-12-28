@@ -40,7 +40,7 @@ public class CommonMapper {
                 .requestedBy(oracleRequest.getRequestedBy().getId())
                 .processedAt(oracleRequest.getProcessedAt())
                 .createdAt(oracleRequest.getCreatedAt())
-                .forecast(map(oracleRequest.getForecast()))
+                .forecast(oracleRequest.getForecast() == null ? null : map(oracleRequest.getForecast()))
                 .build();
     }
 

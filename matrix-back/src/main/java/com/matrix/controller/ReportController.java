@@ -32,12 +32,4 @@ public class ReportController extends BaseController {
         Report report = reportService.getLatestReport();
         return success(CommonMapper.map(report));
     }
-
-    @GetMapping("/for-architect")
-    public ResponseEntity<ApiResponse<ReportResponse>> getReportByMonitor() {
-        LocalDateTime periodEnd = LocalDateTime.now();
-        LocalDateTime periodStart = periodEnd.minusHours(24);
-        Report report = reportService.generateReportByTime(periodStart, periodEnd);
-        return success("Architect report ready", CommonMapper.map(report));
-    }
 }

@@ -323,11 +323,6 @@ export const getLatestReport = async (): Promise<Report> => {
   return response.data.data;
 };
 
-export const getArchitectReport = async (): Promise<any> => {
-  const response = await api.get<ApiResponse<any>>('/reports/for-architect');
-  return response.data.data;
-};
-
 // ========== USERS ==========
 export const getAllUsers = async (): Promise<User[]> => {
   const response = await api.get<ApiResponse<User[]>>('/users');

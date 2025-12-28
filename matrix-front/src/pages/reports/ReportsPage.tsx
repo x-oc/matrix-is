@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { 
-  getArchitectReport, 
   generateDailyReport,
   getLatestReport
 } from "../../api/client";
@@ -45,7 +44,6 @@ export default function ReportsPage() {
       
       if (has(user.role, "GENERATE_REPORTS")) {
         const [architectReportData, latestReportData] = await Promise.all([
-          getArchitectReport(),
           getLatestReport()
         ]);
         setArchitectReport(architectReportData);
@@ -224,7 +222,7 @@ export default function ReportsPage() {
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = `report_${latestReport.id}.txt`;
+                              a.download = `report_${latestReport.id}.json`;
                               a.click();
                             }}
                           >

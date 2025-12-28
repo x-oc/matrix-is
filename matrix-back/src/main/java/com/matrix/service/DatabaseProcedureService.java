@@ -19,9 +19,9 @@ public class DatabaseProcedureService {
     @Transactional
     public void assignTicket(Long ticketId, RoleEnum role) {
         jdbcTemplate.update(
-                "CALL assign_ticket(?, ?)",
+                "CALL assign_ticket(?, ?::role_enum)",
                 ticketId,
-                role
+                role.name()
         );
     }
 

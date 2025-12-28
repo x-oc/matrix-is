@@ -38,7 +38,7 @@ public class ReportService {
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Report generateReportByTime(LocalDateTime periodStart, LocalDateTime periodEnd) {
         customUserDetailsService.checkRoles(List.of(RoleEnum.MONITOR));
         Long reportId = databaseProcedureService.generateReportByTime(periodStart, periodEnd);

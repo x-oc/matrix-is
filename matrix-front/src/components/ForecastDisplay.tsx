@@ -80,7 +80,7 @@ export default function ForecastDisplay({
             📊 Прогнозы Оракула
           </Typography>
           <Chip 
-            label={`${forecasts.length} прогнозов`} 
+            label={`Прогнозы - ${forecasts.length}`} 
             size="small" 
             color="info"
           />

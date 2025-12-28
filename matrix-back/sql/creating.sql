@@ -581,13 +581,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION select_chosen_one(
-    p_unit_id INTEGER,
-    p_selected_by INTEGER,
-    p_matrix_iteration_id INTEGER
+    p_unit_id BIGINT,
+    p_selected_by BIGINT,
+    p_matrix_iteration_id BIGINT
 ) RETURNS INTEGER AS $$
 DECLARE
-    v_chosen_one_id INTEGER;
-    v_unit_user_id INTEGER;
+    v_chosen_one_id BIGINT;
+    v_unit_user_id BIGINT;
     v_the_one_role role_enum := 'THE_ONE';
 BEGIN
     -- Создаем пользователя для Избранного
@@ -617,15 +617,19 @@ $$ LANGUAGE plpgsql;
 
 -- 5.2. Процедуры
 CREATE OR REPLACE PROCEDURE assign_ticket(
-    p_ticket_id INTEGER,
+    p_ticket_id BIGINT,
     p_assigned_to_role role_enum
 ) AS $$
 DECLARE
-    v_system_user_id INTEGER;
+    v_system_user_id BIGINT;
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM tickets WHERE id = p_ticket_id) THEN
         RAISE EXCEPTION 'Ticket with ID % does not exist', p_ticket_id;
     END IF;
+
+    SELECT id INTO v_system_user_id
+        FROM users
+        WHERE username = 'system';
 
     UPDATE tickets
     SET assigned_to_role = p_assigned_to_role,
@@ -643,8 +647,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE process_oracle_prediction(
-    p_request_id INTEGER,
-    p_oracle_id INTEGER,
+    p_request_id BIGINT,
+    p_oracle_id BIGINT,
     p_forecast_text TEXT
 ) AS $$
 DECLARE
