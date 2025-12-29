@@ -1,0 +1,165 @@
+API_URL="http://localhost:8080/api"
+FRONTEND_URL="http://localhost:5173"
+
+# UC-101
+
+# Авторизация Смотрителя
+curl -X POST "$API_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "monitor_gamma",
+    "password": "watch_123"
+  }'
+
+# Сохраняем токен
+export MONITOR_TOKEN="Bearer <token_из_ответа>"
+
+# Системное ядро автоматически создает тикеты
+# Проверим существующие тикеты
+curl -X GET "$API_URL/tickets" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Получаем список новых тикетов
+curl -X GET "$API_URL/tickets/status/NEW" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Получаем детали выбранного тикета
+curl -X GET "$API_URL/ticket-comments/ticket/<айди тикета>" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Назначаем тикет на Механика (уровень угрозы 1-2)
+curl -X PUT "$API_URL/tickets/<айди тикета>/assign?role=MECHANIC" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Или назначаем на Агента Смита (уровень угрозы 3)
+curl -X PUT "$API_URL/tickets/<айди тикета>/assign?role=AGENT_SMITH" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Для проверки:
+curl -X GET "$API_URL/ticket-comments/ticket/<айди тикета>" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+
+# UC-102
+
+# Авторизация Механика
+curl -X POST "$API_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "mechanic_03",
+    "password": "watch_123"
+  }'
+
+export MECHANIC_TOKEN="Bearer <token_из_ответа>"
+
+# Получаем тикеты, назначенные механику
+curl -X GET "$API_URL/tickets" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Запрашиваем временные права доступа к сектору (создаем разрешение)
+curl -X POST "$API_URL/mechanic-permissions" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": <айди пользователя, которому хотим выдать доступ>,
+    "sectorId": 1,
+    "permissionStart": "2025-12-10T10:00:00",
+    "permissionEnd": "2026-12-10T18:00:00"
+  }'
+
+# Получаем список всех секторов
+curl -X GET "$API_URL/sectors" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Изменяем статус тикета на "В работе"
+curl -X PUT "$API_URL/tickets/1/status/IN_PROGRESS" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Изменяем код сектора
+curl -X POST "$API_URL/sectors/1/administer" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sectorId": 1,
+    "patchCode": "PATCH_001"
+  }'
+
+# Проверяем, что изменения применились
+curl -X GET "$API_URL/sectors/1" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Помечаем тикет как "На проверке"
+curl -X PUT "$API_URL/tickets/1/status/UNDER_REVIEW" \
+  -H "Authorization: $MECHANIC_TOKEN" \
+  -H "Content-Type: application/json"
+
+
+# Авторизация Агента Смита
+curl -X POST "$API_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "agent_smith_03",
+    "password": "watch_123"
+  }'
+
+export AGENT_TOKEN="Bearer <token_из_ответа>"
+
+# Получаем детали тикета
+curl -X GET "$API_URL/ticket-comments/ticket/8" \
+  -H "Authorization: $AGENT_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Получаем список затронутых юнитов в тикете
+curl -X GET "$API_URL/ticket-units/ticket/8" \
+  -H "Authorization: $AGENT_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Пример: Получаем ID первого затронутого юнита из ответа выше
+# Меняем его статус на FIXED
+curl -X PUT "$API_URL/ticket-units/22/status?status=FIXED" \
+  -H "Authorization: $AGENT_TOKEN" \
+  -H "Content-Type: application/json"
+
+# После обработки всех юнитов, ставим статус тикета "На проверке"
+curl -X PUT "$API_URL/tickets/8/status/UNDER_REVIEW" \
+  -H "Authorization: $AGENT_TOKEN" \
+  -H "Content-Type: application/json"
+
+
+# UC-103
+
+# Смотритель проверяет тикеты на проверке
+curl -X GET "$API_URL/tickets/status/UNDER_REVIEW" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Закрываем тикет
+curl -X PUT "$API_URL/tickets/1/status/CLOSED" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Генерируем ежедневный отчет
+curl -X POST "$API_URL/reports/generate-daily?periodStart=2025-12-10T00:00:00&periodEnd=2025-12-31T23:59:59" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Проверяем полученный отчёт
+curl -X GET "$API_URL/reports/latest" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+
+# Получаем дашборд для Архитектора
+curl -X GET "$API_URL/dashboard/summary" \
+  -H "Authorization: $MONITOR_TOKEN" \
+  -H "Content-Type: application/json"
+

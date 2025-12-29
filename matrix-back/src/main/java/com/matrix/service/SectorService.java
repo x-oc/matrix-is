@@ -1,13 +1,18 @@
 package com.matrix.service;
 
+import com.matrix.dto.request.AdministerSectorRequest;
 import com.matrix.entity.auxiliary.Sector;
+import com.matrix.entity.linking.MechanicPermission;
+import com.matrix.entity.primary.User;
 import com.matrix.exception.BusinessException;
 import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.SectorRepository;
+import com.matrix.security.CustomUserDetailsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -15,10 +20,16 @@ import java.util.List;
 public class SectorService extends BaseService<Sector, Long> {
 
     private final SectorRepository sectorRepository;
+    private final MechanicPermissionService mechanicPermissionService;
+    private final CustomUserDetailsService customUserDetailsService;
 
-    public SectorService(SectorRepository sectorRepository) {
+    public SectorService(SectorRepository sectorRepository,
+                         MechanicPermissionService mechanicPermissionService,
+                         CustomUserDetailsService customUserDetailsService) {
         super(sectorRepository);
         this.sectorRepository = sectorRepository;
+        this.mechanicPermissionService = mechanicPermissionService;
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     @Override
@@ -34,10 +45,20 @@ public class SectorService extends BaseService<Sector, Long> {
                 .orElseThrow(() -> new ResourceNotFoundException("Sector not found with id: " + id));
     }
 
-    @Override
     @Transactional
-    public Sector save(Sector entity) {
-        return sectorRepository.save(entity);
+    public Sector save(AdministerSectorRequest request) {
+        Sector sector = findById(request.getSectorId());
+        User user = customUserDetailsService.getUser();
+        LocalDateTime now = LocalDateTime.now();
+        List<MechanicPermission> permissions = mechanicPermissionService.getByUser(user.getId()).stream()
+                .filter(permission -> permission.getUser() == user &&
+                        permission.getPermissionEnd().isAfter(now) &&
+                        permission.getPermissionStart().isBefore(now)).toList();
+        if (permissions.isEmpty()) {
+            throw new BusinessException("You don't have permission to edit sector");
+        }
+        sector.setCode(request.getPatchCode());
+        return sectorRepository.save(sector);
     }
 
     @Override

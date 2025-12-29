@@ -46,6 +46,10 @@ server:
   port: 8080
   servlet:
     context-path: /api
+    encoding:
+      charset: utf-8
+      enabled: true
+      force: true
 
 logging:
   level:

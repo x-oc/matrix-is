@@ -394,7 +394,7 @@ INSERT INTO oracle_requests (matrix_iteration_id, unit_id, status, requested_by,
 
 INSERT INTO forecasts (oracle_request_id, forecast, created_at) VALUES
 (1, '{"success_rate": 0.87, "recommended_action": "isolation", "timeframe": "48h", "risk_factor": 0.23}', '2024-01-20 14:45:00'),
-(4, '{"is_the_one": true, "probability": 0.996, "reboot_success_chance": 0.89, "zion_destruction_necessity": 0.67}', '2024-01-25 12:30:00');
+(3, '{"is_the_one": true, "probability": 0.996, "reboot_success_chance": 0.89, "zion_destruction_necessity": 0.67}', '2024-01-25 12:30:00');
 
 INSERT INTO chosen_ones (unit_id, restrictions_lifted, final_decision, selected_by, user_id, matrix_iteration_id, selected_at) VALUES
 (9, TRUE, 'Matrix Reboot', 1, 12, 6, '2024-01-25 12:00:00');

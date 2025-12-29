@@ -346,16 +346,6 @@ export const updateUserStatus = async (id: number, isActive: boolean): Promise<U
   return response.data.data;
 };
 
-// ========== SYSTEM KERNEL ==========
-export const createGlitchTicket = async (request: any): Promise<Ticket> => {
-  const response = await api.post<ApiResponse<Ticket>>('/kernel/glitch', request);
-  return response.data.data;
-};
-
-export const autoDetectAndCreateTickets = async (): Promise<void> => {
-  await api.post<ApiResponse<void>>('/kernel/candidate');
-};
-
 // ========== TICKET-UNIT LINKING ==========
 export const linkTicketToUnit = async (ticketId: number, unitId: number, status: string): Promise<any> => {
   const response = await api.post<ApiResponse<any>>('/ticket-units/link', {

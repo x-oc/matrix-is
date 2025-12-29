@@ -1,6 +1,5 @@
 package com.matrix.service;
 
-import com.matrix.dto.request.CreateGlitchTicketRequest;
 import com.matrix.entity.enums.*;
 import com.matrix.entity.primary.Ticket;
 import com.matrix.repository.TicketRepository;
@@ -19,24 +18,24 @@ public class SystemKernelService {
 
     private final TicketRepository ticketRepository;
 
-    @Transactional
-    public Ticket createGlitchTicket(CreateGlitchTicketRequest request) {
-        Ticket ticket = new Ticket();
-        ticket.setTitle(request.getTitle());
-        ticket.setDescription(request.getDescription());
-        ticket.setThreatLevel(request.getThreatLevel());
-        ticket.setAnomalyType(request.getAnomalyType());
-        ticket.setMatrixCoordinates(request.getCoordinates());
-        ticket.setCreatedAt(LocalDateTime.now());
-        ticket.setUpdatedAt(LocalDateTime.now());
-        ticket.setStatus(TicketStatusEnum.NEW);
-
-        return ticketRepository.save(ticket);
-    }
-
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 300000)
     @Transactional
     public void autoDetectAndCreateTickets() {
         log.info("System Kernel: Auto-detecting anomalies...");
+
+        Ticket testTicket = new Ticket();
+        testTicket.setTitle("Автоматически обнаруженный глитч: " + LocalDateTime.now());
+        testTicket.setDescription("Глитч обнаружен в секторе " + (int)(Math.random() * 100));
+        testTicket.setThreatLevel(1);
+        testTicket.setImportanceLevel(TicketImportanceEnum.LOW);
+        testTicket.setAssignedToRole(RoleEnum.MONITOR);
+        testTicket.setAnomalyType(AnomalyTypeEnum.VISUAL_ARTIFACT);
+        testTicket.setMatrixCoordinates("[" + (int)(Math.random() * 1000) + "," + (int)(Math.random() * 1000) + "]");
+        testTicket.setCreatedAt(LocalDateTime.now());
+        testTicket.setUpdatedAt(LocalDateTime.now());
+        testTicket.setStatus(TicketStatusEnum.NEW);
+
+        ticketRepository.save(testTicket);
+        log.info("Автоматически создан тестовый тикет #{}", testTicket.getId());
     }
 }

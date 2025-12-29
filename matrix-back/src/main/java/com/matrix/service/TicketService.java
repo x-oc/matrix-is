@@ -76,7 +76,7 @@ public class TicketService extends BaseService<Ticket, Long> {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-        if (role != ticket.getAssignedToRole() && role != RoleEnum.ARCHITECT) {
+        if (role != ticket.getAssignedToRole() && role != RoleEnum.ARCHITECT && role != RoleEnum.MONITOR) {
             throw new BusinessException("С вашей ролью запрещено менять информацию по тикету");
         }
 

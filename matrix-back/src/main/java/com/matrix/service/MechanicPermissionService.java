@@ -9,6 +9,7 @@ import com.matrix.exception.ResourceNotFoundException;
 import com.matrix.repository.MechanicPermissionRepository;
 import com.matrix.repository.SectorRepository;
 import com.matrix.repository.UserRepository;
+import com.matrix.security.CustomUserDetailsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,13 +24,16 @@ public class MechanicPermissionService extends BaseService<MechanicPermission, L
     private final MechanicPermissionRepository mechanicPermissionRepository;
     private final UserRepository userRepository;
     private final SectorRepository sectorRepository;
+    private final CustomUserDetailsService customUserDetailsService;
 
     public MechanicPermissionService(MechanicPermissionRepository mechanicPermissionRepository,
                                      UserRepository userRepository,
-                                     SectorRepository sectorRepository) {
+                                     SectorRepository sectorRepository,
+                                     CustomUserDetailsService customUserDetailsService) {
         super(mechanicPermissionRepository);
         this.mechanicPermissionRepository = mechanicPermissionRepository;
         this.userRepository = userRepository;
+        this.customUserDetailsService = customUserDetailsService;
         this.sectorRepository = sectorRepository;
     }
 
@@ -76,6 +80,11 @@ public class MechanicPermissionService extends BaseService<MechanicPermission, L
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        RoleEnum role = customUserDetailsService.getRole();
+        if (role != RoleEnum.MECHANIC && role != RoleEnum.ARCHITECT && role != RoleEnum.SYSTEM_KERNEL) {
+            throw new BusinessException("You can't give sector permission");
+        }
 
         if (user.getRole() != RoleEnum.MECHANIC) {
             throw new BusinessException("Only mechanics can have sector permissions");

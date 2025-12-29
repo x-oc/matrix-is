@@ -6,6 +6,8 @@ import com.matrix.entity.primary.Unit;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "tickets_units")
@@ -26,6 +28,7 @@ public class TicketUnit {
     private Ticket ticket;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "ticket_unit_status_enum", nullable = false)
     private TicketUnitStatusEnum status;
 }
